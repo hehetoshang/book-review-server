@@ -21,7 +21,7 @@ model User {
   lastRead     DateTime? @map("last_read")
   permission   String   @default("") @map("permission") @db.VarChar(100)
   comments     Comment[] @relation("ReviewUser")
-  thirdParties ThirdPartyUser[]
+  thirdParties ThirdPartyUser[] @relation("ThirdPartyInternalUser")
 
   @@map("readers")
 }
@@ -35,8 +35,9 @@ model App {
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  comments    Comment[] @relation("AppComments")
-  nonces      Nonce[]
+  comments     Comment[] @relation("AppComments")
+  nonces       Nonce[]
+  thirdParties ThirdPartyUser[] @relation("ThirdPartyApp")
 
   @@map("apps")
 }
@@ -44,12 +45,12 @@ model App {
 model ThirdPartyUser {
   id             Int      @id @default(autoincrement()) @map("id")
   appId          Int      @map("app_id")
-  app            App      @relation(fields: [appId], references: [id])
+  app            App      @relation("ThirdPartyApp", fields: [appId], references: [id])
   externalId     String   @map("external_id") @db.VarChar(200)
   externalEmail  String?  @map("external_email") @db.VarChar(200)
   externalNick   String?  @map("external_nick") @db.VarChar(100)
   internalUserId Int      @map("internal_user_id")
-  internalUser   User     @relation(fields: [internalUserId], references: [id])
+  internalUser   User     @relation("ThirdPartyInternalUser", fields: [internalUserId], references: [id])
   lastLoginAt    DateTime @default(now()) @map("last_login_at")
   createdAt      DateTime @default(now()) @map("created_at")
 
