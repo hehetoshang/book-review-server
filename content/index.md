@@ -10,6 +10,7 @@
 - **嵌入评论**：iframe 嵌入 + postMessage 通信 + JS SDK
 - **管理后台**：Naive UI 构建的应用管理、评论审核、统计仪表盘
 - **安全防护**：XSS 过滤、频率限制、nonce 防重放、CORS 动态配置
+- **MySQL 兼容**：直接对接原有 MySQL 数据库，无需迁移数据
 
 ## 技术栈
 
@@ -18,7 +19,7 @@
 | 框架 | Nuxt 4 (兼容 Nuxt 3+) |
 | 前端 | Vue 3 Composition API + TypeScript |
 | UI | Naive UI |
-| 数据库 | SQLite (开发) / PostgreSQL (生产) |
+| 数据库 | MySQL (生产) |
 | ORM | Prisma |
 | 认证 | bcrypt + JWT |
 | 文档 | @nuxt/content |
@@ -40,7 +41,7 @@ chapter-comments-platform/
 ├── public/
 │   └── sdk.js            # JS SDK
 ├── prisma/
-│   ├── schema.prisma     # 数据库模型
+│   ├── schema.prisma     # 数据库模型（MySQL，字段兼容原有表）
 │   └── seed.ts           # 种子脚本
 ├── composables/          # Vue composables
 └── content/              # 开发者文档

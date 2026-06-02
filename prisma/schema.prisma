@@ -3,96 +3,114 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  nickname     String
-  avatar       String?
-  password     String   @default("")
-  role         String   @default("user")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  accessTime   DateTime?
-  comments     Comment[]
+  id           Int      @id @default(autoincrement()) @map("id")
+  email        String   @unique @map("email") @db.VarChar(200)
+  nickname     String   @map("nickname") @db.VarChar(100)
+  avatar       String?  @map("avatar") @db.VarChar(200)
+  password     String   @default("") @map("password") @db.VarChar(255)
+  role         String   @default("user") @map("role") @db.VarChar(50)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("create_time")
+  updatedAt    DateTime @updatedAt @map("update_time")
+  accessTime   DateTime? @map("access_time")
+  lastRead     DateTime? @map("last_read")
+  permission   String   @default("") @map("permission") @db.VarChar(100)
+  comments     Comment[] @relation("ReviewUser")
   thirdParties ThirdPartyUser[]
 
-  @@map("users")
+  @@map("readers")
 }
 
 model App {
-  id          Int      @id @default(autoincrement())
-  appId       String   @unique
-  secret      String
-  name        String
-  domains     String   @default("")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  comments    Comment[]
+  id          Int      @id @default(autoincrement()) @map("id")
+  appId       String   @unique @map("app_id") @db.VarChar(100)
+  secret      String   @map("secret") @db.VarChar(255)
+  name        String   @map("name") @db.VarChar(200)
+  domains     String   @default("") @map("domains") @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  comments    Comment[] @relation("AppComments")
   nonces      Nonce[]
 
   @@map("apps")
 }
 
 model ThirdPartyUser {
-  id             Int      @id @default(autoincrement())
-  appId          Int
+  id             Int      @id @default(autoincrement()) @map("id")
+  appId          Int      @map("app_id")
   app            App      @relation(fields: [appId], references: [id])
-  externalId     String
-  externalEmail  String?
-  externalNick   String?
-  internalUserId Int
+  externalId     String   @map("external_id") @db.VarChar(200)
+  externalEmail  String?  @map("external_email") @db.VarChar(200)
+  externalNick   String?  @map("external_nick") @db.VarChar(100)
+  internalUserId Int      @map("internal_user_id")
   internalUser   User     @relation(fields: [internalUserId], references: [id])
-  lastLoginAt    DateTime @default(now())
-  createdAt      DateTime @default(now())
+  lastLoginAt    DateTime @default(now()) @map("last_login_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@unique([appId, externalId])
   @@map("third_party_users")
 }
 
 model Nonce {
-  id        Int      @id @default(autoincrement())
-  appId     Int
+  id        Int      @id @default(autoincrement()) @map("id")
+  appId     Int      @map("app_id")
   app       App      @relation(fields: [appId], references: [id])
-  nonce     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  nonce     String   @unique @map("nonce") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([nonce], map: "idx_nonce")
   @@map("nonces")
 }
 
+model ReviewBook {
+  id     Int     @id @default(autoincrement()) @map("id")
+  title  String  @default("") @map("title") @db.VarChar(255)
+  alias  String  @default("") @map("alias") @db.VarChar(5120)
+  
+  @@map("review_books")
+}
+
+model ReviewChapter {
+  id       Int     @id @default(autoincrement()) @map("id")
+  bookId   Int     @default(0) @map("book_id")
+  title    String  @default("") @map("title") @db.VarChar(255)
+  alias    String  @default("") @map("alias") @db.VarChar(5120)
+  parents  String  @default("") @map("parents") @db.VarChar(5120)
+
+  @@map("review_chapters")
+}
+
 model Comment {
-  id          Int      @id @default(autoincrement())
-  appId       Int
-  app         App      @relation(fields: [appId], references: [id])
-  bookId      Int      @default(0)
-  bookTitle   String   @default("")
-  chapterId   Int      @default(0)
-  chapterName String   @default("")
-  segmentId   Int      @default(0)
-  cfi         String   @default("")
-  cfiBase     String   @default("")
-  content     String   @default("")
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  rootId      Int?
-  quoteId     Int?
-  level       Int      @default(0)
-  type        Int      @default(1)
-  geo         String   @default("")
-  likeCount   Int      @default(0)
-  dislikeCount Int     @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement()) @map("id")
+  appId        Int      @default(0) @map("app_id")
+  app          App?     @relation("AppComments", fields: [appId], references: [id])
+  bookId       Int      @default(0) @map("book_id")
+  chapterId    Int      @default(0) @map("chapter_id")
+  segmentId    Int      @default(0) @map("segment_id")
+  cfi          String   @default("") @map("cfi") @db.VarChar(255)
+  cfiBase      String   @default("") @map("cfi_base") @db.VarChar(255)
+  type         Int      @default(0) @map("type")
+  level        Int      @default(0) @map("level")
+  content      String   @default("") @map("content") @db.VarChar(1024)
+  createdAt    DateTime @default(now()) @map("create_time")
+  updatedAt    DateTime @updatedAt @map("update_time")
+  geo          String   @default("") @map("geo") @db.VarChar(255)
+  userId       Int      @map("user_id")
+  user         User     @relation("ReviewUser", fields: [userId], references: [id])
+  rootId       Int?     @map("root_id")
+  quoteId      Int?     @map("quote_id")
+  likeCount    Int      @default(0) @map("like_count")
+  dislikeCount Int      @default(0) @map("dislike_count")
 
   @@index([appId, chapterId], map: "idx_app_chapter")
   @@index([userId], map: "idx_user")
   @@index([appId], map: "idx_app")
-  @@map("comments")
+  @@map("reviews")
 }
