@@ -3,28 +3,40 @@
     <NMessageProvider>
       <NDialogProvider>
         <NLayout has-sider class="admin-layout">
-          <NLayoutSider bordered :width="220" :collapsed="collapsed" show-trigger @collapse="collapsed = true" @expand="collapsed = false">
-            <div class="logo">
-              <h2 v-if="!collapsed">评论管理平台</h2>
-              <h2 v-else>CP</h2>
+          <NLayoutSider 
+            bordered 
+            :width="collapsed ? 64 : 220" 
+            :collapsed="collapsed" 
+            show-trigger 
+            @collapse="collapsed = true" 
+            @expand="collapsed = false"
+            class="sider"
+          >
+            <div class="logo-wrapper">
+              <div class="logo">💬</div>
+              <span v-if="!collapsed" class="logo-text">评论平台</span>
             </div>
-            <NMenu v-model:value="activeMenu" :options="menuOptions" :collapsed="collapsed" @update:value="handleMenuClick" />
+            <NMenu 
+              v-model:value="activeMenu" 
+              :options="menuOptions" 
+              :collapsed="collapsed" 
+              @update:value="handleMenuClick"
+              mode="vertical"
+            />
           </NLayoutSider>
-          <NLayout>
+          <NLayout class="main-layout">
             <NLayoutHeader bordered class="admin-header">
               <div class="header-left">
-                <NSpace align="center">
-                  <NBreadcrumb>
-                    <NBreadcrumbItem v-for="item in breadcrumbs" :key="item">
-                      {{ item }}
-                    </NBreadcrumbItem>
-                  </NBreadcrumb>
-                </NSpace>
+                <NBreadcrumb>
+                  <NBreadcrumbItem v-for="(item, index) in breadcrumbs" :key="index">
+                    {{ item }}
+                  </NBreadcrumbItem>
+                </NBreadcrumb>
               </div>
               <div class="header-right">
                 <NSpace>
-                  <span>{{ authStore.user?.nickname || '管理员' }}</span>
-                  <NButton size="small" @click="handleLogout">退出</NButton>
+                  <span class="user-info">{{ authStore.user?.nickname }}</span>
+                  <NButton size="small" ghost @click="handleLogout">退出</NButton>
                 </NSpace>
               </div>
             </NLayoutHeader>
@@ -39,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import {
   NConfigProvider,
   NMessageProvider,
@@ -52,9 +65,8 @@ import {
   NBreadcrumbItem,
   NSpace,
   NButton,
+  type MenuOption,
 } from 'naive-ui'
-import { h } from 'vue'
-import type { MenuOption } from 'naive-ui'
 
 const authStore = useAuthStore()
 const collapsed = ref(false)
@@ -65,28 +77,36 @@ const themeOverrides = {
     primaryColor: '#2080f0',
     primaryColorHover: '#1660c0',
   },
+  Menu: {
+    itemTextColor: '#666',
+    itemTextColorHover: '#2080f0',
+    itemTextColorActive: '#2080f0',
+    itemBgColorHover: '#f0f5ff',
+    itemBgColorActive: '#e8f0ff',
+    itemBorderRadius: '8px',
+  },
 }
 
 const menuOptions: MenuOption[] = [
   {
     label: '仪表盘',
     key: 'dashboard',
-    icon: () => h('span', {}, '📊'),
+    icon: '📊',
   },
   {
     label: '应用管理',
     key: 'apps',
-    icon: () => h('span', {}, '📱'),
+    icon: '📱',
   },
   {
     label: '评论管理',
     key: 'comments',
-    icon: () => h('span', {}, '💬'),
+    icon: '💬',
   },
   {
     label: '个人设置',
     key: 'settings',
-    icon: () => h('span', {}, '⚙️'),
+    icon: '⚙️',
   },
 ]
 
@@ -134,27 +154,51 @@ const handleLogout = () => {
 .admin-layout {
   min-height: 100vh;
 }
-.logo {
-  height: 64px;
+.sider {
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+.logo-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  height: 64px;
+  padding: 16px;
   border-bottom: 1px solid #f0f0f0;
 }
-.logo h2 {
+.logo {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
+  border-radius: 10px;
+}
+.logo-text {
   font-size: 16px;
-  color: #333;
-  white-space: nowrap;
+  font-weight: 600;
+  color: #1a1a2e;
 }
 .admin-header {
-  height: 56px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 20px;
+  background: #fff;
+}
+.header-left {
+  flex: 1;
+}
+.user-info {
+  color: #666;
+  font-size: 14px;
 }
 .admin-content {
   padding: 24px;
-  background: #f5f5f5;
+  background: #f5f7fa;
 }
 </style>

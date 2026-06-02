@@ -9,10 +9,11 @@ export default defineEventHandler(async (event) => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const [appCount, commentCount, todayComments] = await Promise.all([
+  const [appCount, commentCount, todayComments, userCount] = await Promise.all([
     prisma.app.count(),
     prisma.comment.count(),
     prisma.comment.count({ where: { createdAt: { gte: today } } }),
+    prisma.user.count(),
   ])
 
   return {
@@ -21,6 +22,7 @@ export default defineEventHandler(async (event) => {
       appCount,
       commentCount,
       todayComments,
+      userCount,
     },
   }
 })

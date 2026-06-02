@@ -1,22 +1,52 @@
 <template>
   <div class="login-page">
-    <n-card class="login-card" :bordered="false">
-      <h1 class="login-title">评论平台管理后台</h1>
-      <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
-        <n-form-item label="邮箱" path="email">
-          <n-input v-model:value="form.email" placeholder="请输入邮箱" />
-        </n-form-item>
-        <n-form-item label="密码" path="password">
-          <n-input v-model:value="form.password" type="password" placeholder="请输入密码" />
-        </n-form-item>
-        <n-button type="primary" block size="large" :loading="loading" @click="handleLogin">
-          登录
-        </n-button>
-      </n-form>
-      <n-alert v-if="error" type="error" closable class="mt-4">
-        {{ error }}
-      </n-alert>
-    </n-card>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="logo-section">
+          <div class="logo">💬</div>
+          <h1>评论平台管理后台</h1>
+          <p class="subtitle">登录您的账号</p>
+        </div>
+        
+        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
+          <n-form-item label="邮箱" path="email">
+            <n-input 
+              v-model:value="form.email" 
+              type="email"
+              placeholder="your@email.com"
+              size="large"
+            >
+              <template #prefix>
+                <span class="icon">📧</span>
+              </template>
+            </n-input>
+          </n-form-item>
+          <n-form-item label="密码" path="password">
+            <n-input 
+              v-model:value="form.password" 
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+            >
+              <template #prefix>
+                <span class="icon">🔒</span>
+              </template>
+            </n-input>
+          </n-form-item>
+          <n-button type="primary" block size="large" :loading="loading" attr-type="submit">
+            登录
+          </n-button>
+        </n-form>
+        
+        <n-alert v-if="error" type="error" closable class="mt-4" :closable="false">
+          {{ error }}
+        </n-alert>
+        
+        <div class="footer">
+          <p>管理员账号：admin@example.com / admin123</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -62,18 +92,57 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f2f5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+.login-container {
+  width: 100%;
+  max-width: 420px;
 }
 .login-card {
-  width: 400px;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
-.login-title {
+.logo-section {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  font-size: 32px;
+  background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+.logo-section h1 {
   font-size: 24px;
-  color: #333;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+.subtitle {
+  color: #666;
+  font-size: 14px;
+}
+.icon {
+  font-size: 16px;
 }
 .mt-4 {
   margin-top: 16px;
+}
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+.footer p {
+  color: #999;
+  font-size: 12px;
 }
 </style>
