@@ -8,35 +8,36 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement()) @map("id")
-  email        String   @unique @map("email") @db.VarChar(200)
-  nickname     String   @map("nickname") @db.VarChar(100)
-  avatar       String?  @map("avatar") @db.VarChar(200)
-  password     String   @default("") @map("password") @db.VarChar(255)
-  role         String   @default("user") @map("role") @db.VarChar(50)
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("create_time")
-  updatedAt    DateTime @updatedAt @map("update_time")
+  id           Int       @id @default(autoincrement()) @map("id")
+  email        String    @unique @map("email") @db.VarChar(200)
+  nickname     String    @map("nickname") @db.VarChar(100)
+  avatar       String?   @map("avatar") @db.VarChar(200)
+  password     String    @default("") @map("password") @db.VarChar(255)
+  role         String    @default("user") @map("role") @db.VarChar(50)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("create_time")
+  updatedAt    DateTime  @updatedAt @map("update_time")
   accessTime   DateTime? @map("access_time")
   lastRead     DateTime? @map("last_read")
-  permission   String   @default("") @map("permission") @db.VarChar(100)
-  comments     Comment[] @relation("ReviewUser")
-  thirdParties ThirdPartyUser[]
+  permission   String    @default("") @map("permission") @db.VarChar(100)
+  comments     Comment[]          @relation("ReviewUser")
+  thirdParties ThirdPartyUser[]   @relation("ThirdPartyInternalUser")
 
   @@map("readers")
 }
 
 model App {
-  id          Int      @id @default(autoincrement()) @map("id")
-  appId       String   @unique @map("app_id") @db.VarChar(100)
-  secret      String   @map("secret") @db.VarChar(255)
-  name        String   @map("name") @db.VarChar(200)
-  domains     String   @default("") @map("domains") @db.Text
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  comments    Comment[] @relation("AppComments")
-  nonces      Nonce[]
+  id           Int              @id @default(autoincrement()) @map("id")
+  appId        String           @unique @map("app_id") @db.VarChar(100)
+  secret       String           @map("secret") @db.VarChar(255)
+  name         String           @map("name") @db.VarChar(200)
+  domains      String           @default("") @map("domains") @db.Text
+  isActive     Boolean          @default(true) @map("is_active")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  comments     Comment[]        @relation("AppComments")
+  nonces       Nonce[]          @relation("AppNonces")
+  thirdParties ThirdPartyUser[] @relation("AppThirdParties")
 
   @@map("apps")
 }
@@ -44,12 +45,12 @@ model App {
 model ThirdPartyUser {
   id             Int      @id @default(autoincrement()) @map("id")
   appId          Int      @map("app_id")
-  app            App      @relation(fields: [appId], references: [id])
+  app            App      @relation("AppThirdParties", fields: [appId], references: [id])
   externalId     String   @map("external_id") @db.VarChar(200)
   externalEmail  String?  @map("external_email") @db.VarChar(200)
   externalNick   String?  @map("external_nick") @db.VarChar(100)
   internalUserId Int      @map("internal_user_id")
-  internalUser   User     @relation(fields: [internalUserId], references: [id])
+  internalUser   User     @relation("ThirdPartyInternalUser", fields: [internalUserId], references: [id])
   lastLoginAt    DateTime @default(now()) @map("last_login_at")
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -60,7 +61,7 @@ model ThirdPartyUser {
 model Nonce {
   id        Int      @id @default(autoincrement()) @map("id")
   appId     Int      @map("app_id")
-  app       App      @relation(fields: [appId], references: [id])
+  app       App      @relation("AppNonces", fields: [appId], references: [id])
   nonce     String   @unique @map("nonce") @db.VarChar(255)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -70,19 +71,19 @@ model Nonce {
 }
 
 model ReviewBook {
-  id     Int     @id @default(autoincrement()) @map("id")
-  title  String  @default("") @map("title") @db.VarChar(255)
-  alias  String  @default("") @map("alias") @db.VarChar(5120)
-  
+  id    Int    @id @default(autoincrement()) @map("id")
+  title String @default("") @map("title") @db.VarChar(255)
+  alias String @default("") @map("alias") @db.VarChar(5120)
+
   @@map("review_books")
 }
 
 model ReviewChapter {
-  id       Int     @id @default(autoincrement()) @map("id")
-  bookId   Int     @default(0) @map("book_id")
-  title    String  @default("") @map("title") @db.VarChar(255)
-  alias    String  @default("") @map("alias") @db.VarChar(5120)
-  parents  String  @default("") @map("parents") @db.VarChar(5120)
+  id      Int    @id @default(autoincrement()) @map("id")
+  bookId  Int    @default(0) @map("book_id")
+  title   String @default("") @map("title") @db.VarChar(255)
+  alias   String @default("") @map("alias") @db.VarChar(5120)
+  parents String @default("") @map("parents") @db.VarChar(5120)
 
   @@map("review_chapters")
 }
