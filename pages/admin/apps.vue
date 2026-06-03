@@ -3,89 +3,139 @@
     <div class="apps-page">
       <div class="page-header">
         <h1 class="page-title">应用管理</h1>
-        <n-button type="primary" @click="showCreateModal = true">
+        <v-btn color="primary" @click="showCreateModal = true">
           创建应用
-        </n-button>
+        </v-btn>
       </div>
 
-      <n-card class="table-card">
-        <n-space class="mb-4">
-          <n-input v-model:value="search" placeholder="搜索应用名称或ID" style="width: 240px" @keyup.enter="loadApps" />
-          <n-button @click="loadApps">搜索</n-button>
-        </n-space>
+      <v-card class="table-card" variant="outlined">
+        <v-card-text>
+          <v-row class="mb-4" align="center">
+            <v-col cols="auto">
+              <v-text-field
+                v-model="search"
+                placeholder="搜索应用名称或ID"
+                density="compact"
+                variant="outlined"
+                hide-details
+                style="max-width: 240px"
+                @keyup.enter="loadApps"
+              />
+            </v-col>
+            <v-col cols="auto">
+              <v-btn @click="loadApps">搜索</v-btn>
+            </v-col>
+          </v-row>
 
-        <n-data-table
-          :columns="columns"
-          :data="apps"
-          :loading="loading"
-          :pagination="pagination"
-          :row-key="(row: any) => row.id"
-          remote
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
-        />
-      </n-card>
+          <v-data-table-server
+            :headers="headers"
+            :items="apps"
+            :loading="loading"
+            :items-length="total"
+            :items-per-page="pageSize"
+            :page="page"
+            :items-per-page-options="[10, 20, 50]"
+            @update:options="handleOptionsChange"
+          >
+            <template v-slot:item._count="{ item }">
+              {{ item._count?.comments || 0 }}
+            </template>
+            <template v-slot:item.isActive="{ item }">
+              <v-chip :color="item.isActive ? 'success' : 'grey'" size="small" variant="flat">
+                {{ item.isActive ? '启用' : '禁用' }}
+              </v-chip>
+            </template>
+            <template v-slot:item.actions="{ item }">
+              <div class="action-buttons">
+                <v-btn size="small" variant="text" @click="navigateTo(`/admin/apps/${item.id}`)">
+                  详情
+                </v-btn>
+                <v-btn
+                  size="small"
+                  variant="text"
+                  :color="item.isActive ? 'warning' : 'success'"
+                  @click="toggleStatus(item)"
+                >
+                  {{ item.isActive ? '禁用' : '启用' }}
+                </v-btn>
+              </div>
+            </template>
+          </v-data-table-server>
+        </v-card-text>
+      </v-card>
 
-      <n-modal v-model:show="showCreateModal" preset="dialog" title="创建应用">
-        <template #default>
-          <n-form ref="createFormRef" :model="createForm" :rules="createRules">
-            <n-form-item label="应用名称" path="name">
-              <n-input v-model:value="createForm.name" placeholder="请输入应用名称" />
-            </n-form-item>
-            <n-form-item label="允许域名" path="domains">
-              <n-input v-model:value="createForm.domains" placeholder="多个域名用逗号分隔" />
-            </n-form-item>
-          </n-form>
-        </template>
-        <template #action>
-          <n-space>
-            <n-button @click="showCreateModal = false">取消</n-button>
-            <n-button type="primary" :loading="creating" @click="handleCreateApp">
+      <v-dialog v-model="showCreateModal" max-width="500">
+        <v-card>
+          <v-card-title>创建应用</v-card-title>
+          <v-card-text>
+            <v-form ref="createFormRef">
+              <v-text-field
+                v-model="createForm.name"
+                label="应用名称"
+                variant="outlined"
+                :rules="[v => !!v || '请输入应用名称']"
+              />
+              <v-text-field
+                v-model="createForm.domains"
+                label="允许域名"
+                placeholder="多个域名用逗号分隔"
+                variant="outlined"
+              />
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="showCreateModal = false">取消</v-btn>
+            <v-btn color="primary" :loading="creating" @click="handleCreateApp">
               创建
-            </n-button>
-          </n-space>
-        </template>
-      </n-modal>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
-      <n-modal v-model:show="showCredentialsModal" preset="dialog" title="应用创建成功">
-        <template #default>
-          <n-alert type="success" class="mb-4">
-            请妥善保管以下凭证。
-          </n-alert>
-          <n-form>
-            <n-form-item label="App ID">
-              <n-input :value="newApp?.appId" readonly>
-                <template #suffix>
-                  <n-button text @click="copyText(newApp?.appId)">复制</n-button>
-                </template>
-              </n-input>
-            </n-form-item>
-            <n-form-item label="Secret">
-              <n-input :value="newApp?.secret" readonly type="password" show-password-on="click">
-                <template #suffix>
-                  <n-button text @click="copyText(newApp?.secret)">复制</n-button>
-                </template>
-              </n-input>
-            </n-form-item>
-          </n-form>
-        </template>
-        <template #action>
-          <n-button type="primary" @click="showCredentialsModal = false">确定</n-button>
-        </template>
-      </n-modal>
+      <v-dialog v-model="showCredentialsModal" max-width="500">
+        <v-card>
+          <v-card-title>应用创建成功</v-card-title>
+          <v-card-text>
+            <v-alert type="success" variant="tonal" class="mb-4">
+              请妥善保管以下凭证。
+            </v-alert>
+            <v-text-field
+              label="App ID"
+              :value="newApp?.appId"
+              variant="outlined"
+              readonly
+            >
+              <template v-slot:append>
+                <v-btn variant="text" size="small" @click="copyText(newApp?.appId)">复制</v-btn>
+              </template>
+            </v-text-field>
+            <v-text-field
+              label="Secret"
+              :value="newApp?.secret"
+              type="password"
+              variant="outlined"
+              readonly
+            >
+              <template v-slot:append>
+                <v-btn variant="text" size="small" @click="copyText(newApp?.secret)">复制</v-btn>
+              </template>
+            </v-text-field>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="primary" @click="showCredentialsModal = false">确定</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
-import {
-  NCard, NSpace, NButton, NInput, NDataTable, NModal, NForm, NFormItem, NAlert, useMessage,
-  type DataTableColumns,
-} from 'naive-ui'
+import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
-const message = useMessage()
 const apps = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
@@ -99,39 +149,20 @@ const creating = ref(false)
 const createForm = ref({ name: '', domains: '' })
 const newApp = ref<any>(null)
 
-const createRules = {
-  name: { required: true, message: '请输入应用名称', trigger: 'blur' },
-}
-
-const pagination = computed(() => ({
-  page: page.value,
-  pageSize: pageSize.value,
-  pageCount: Math.ceil(total.value / pageSize.value) || 1,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50],
-}))
-
-const columns: DataTableColumns<any> = [
-  { title: 'App ID', key: 'appId', width: 180, ellipsis: { tooltip: true } },
+const headers = [
+  { title: 'App ID', key: 'appId', width: 180 },
   { title: '应用名称', key: 'name' },
-  { title: '域名', key: 'domains', ellipsis: { tooltip: true } },
-  { title: '评论数', key: '_count', width: 100, render: (row) => row._count?.comments || 0 },
-  { 
-    title: '状态', 
-    key: 'isActive', 
-    width: 80,
-    render: (row) => row.isActive ? '启用' : '禁用',
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 140,
-    render: (row) => h('div', { style: 'display:flex;gap:8px;' }, [
-      h(NButton, { size: 'small', onClick: () => navigateTo(`/admin/apps/${row.id}`) }, { default: () => '详情' }),
-      h(NButton, { size: 'small', type: row.isActive ? 'warning' : 'success', onClick: () => toggleStatus(row) }, { default: () => row.isActive ? '禁用' : '启用' }),
-    ]),
-  },
+  { title: '域名', key: 'domains' },
+  { title: '评论数', key: '_count', width: 100 },
+  { title: '状态', key: 'isActive', width: 100 },
+  { title: '操作', key: 'actions', width: 140, sortable: false },
 ]
+
+const handleOptionsChange = (options: any) => {
+  page.value = options.page
+  pageSize.value = options.itemsPerPage
+  loadApps()
+}
 
 const loadApps = async () => {
   loading.value = true
@@ -148,24 +179,16 @@ const loadApps = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '加载失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '加载失败')
+    }
   } finally {
     loading.value = false
   }
 }
 
-const handlePageChange = (p: number) => {
-  page.value = p
-  loadApps()
-}
-
-const handlePageSizeChange = (ps: number) => {
-  pageSize.value = ps
-  page.value = 1
-  loadApps()
-}
-
 const handleCreateApp = async () => {
+  if (!createForm.value.name) return
   creating.value = true
   try {
     const { token } = useAuthStore()
@@ -182,7 +205,9 @@ const handleCreateApp = async () => {
       loadApps()
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '创建失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '创建失败')
+    }
   } finally {
     creating.value = false
   }
@@ -196,16 +221,24 @@ const toggleStatus = async (row: any) => {
       headers: { Authorization: `Bearer ${token.value}` },
       body: { isActive: !row.isActive },
     })
-    message.success(row.isActive ? '已禁用' : '已启用')
+    if (import.meta.client) {
+      alert(row.isActive ? '已禁用' : '已启用')
+    }
     loadApps()
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '操作失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '操作失败')
+    }
   }
 }
 
 const copyText = (text?: string) => {
   if (text && navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => message.success('已复制'))
+    navigator.clipboard.writeText(text).then(() => {
+      if (import.meta.client) {
+        alert('已复制')
+      }
+    })
   }
 }
 
@@ -228,7 +261,8 @@ onMounted(loadApps)
 .table-card {
   border-radius: 16px;
 }
-.mb-4 {
-  margin-bottom: 16px;
+.action-buttons {
+  display: flex;
+  gap: 4px;
 }
 </style>

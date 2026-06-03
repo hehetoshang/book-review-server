@@ -1,97 +1,59 @@
 <template>
-  <NConfigProvider :theme-overrides="themeOverrides">
-    <NMessageProvider>
-      <NDialogProvider>
-        <NLayout has-sider class="admin-layout">
-          <NLayoutSider 
-            bordered 
-            :width="collapsed ? 64 : 220" 
-            :collapsed="collapsed" 
-            show-trigger 
-            @collapse="collapsed = true" 
-            @expand="collapsed = false"
-            class="sider"
-          >
-            <div class="logo-wrapper">
-              <div class="logo">💬</div>
-              <span v-if="!collapsed" class="logo-text">评论平台</span>
-            </div>
-            <NMenu 
-              v-model:value="activeMenu" 
-              :options="menuOptions" 
-              :collapsed="collapsed" 
-              @update:value="handleMenuClick"
-              mode="vertical"
-            />
-          </NLayoutSider>
-          <NLayout class="main-layout">
-            <NLayoutHeader bordered class="admin-header">
-              <div class="header-left">
-                <NBreadcrumb>
-                  <NBreadcrumbItem v-for="(item, index) in breadcrumbs" :key="index">
-                    {{ item }}
-                  </NBreadcrumbItem>
-                </NBreadcrumb>
-              </div>
-              <div class="header-right">
-                <NSpace>
-                  <span class="user-info">{{ authStore.user?.nickname }}</span>
-                  <NButton size="small" @click="handleLogout">退出</NButton>
-                </NSpace>
-              </div>
-            </NLayoutHeader>
-            <NLayoutContent class="admin-content">
-              <slot />
-            </NLayoutContent>
-          </NLayout>
-        </NLayout>
-      </NDialogProvider>
-    </NMessageProvider>
-  </NConfigProvider>
+  <v-app>
+    <v-navigation-drawer v-model="drawer" app>
+      <div class="logo-wrapper">
+        <div class="logo">&#128172;</div>
+        <span v-if="!mini" class="logo-text">评论平台</span>
+      </div>
+      <v-divider />
+      <v-list density="compact" nav>
+        <v-list-item
+          v-for="item in menuItems"
+          :key="item.key"
+          :value="item.key"
+          :active="activeMenu === item.key"
+          @click="handleMenuClick(item.key)"
+        >
+          <template v-slot:prepend>
+            <v-icon :icon="item.icon" size="20" />
+          </template>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar app height="60" elevation="1">
+      <v-app-bar-nav-icon @click="drawer = !drawer" />
+      <v-app-bar-title>
+        <v-breadcrumbs :items="breadcrumbs" divider="/" density="compact" class="pa-0" />
+      </v-app-bar-title>
+      <v-spacer />
+      <span class="user-info">{{ authStore.user?.nickname }}</span>
+      <v-btn size="small" variant="text" @click="handleLogout">退出</v-btn>
+    </v-app-bar>
+
+    <v-main>
+      <v-container class="admin-content">
+        <slot />
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import {
-  NConfigProvider,
-  NMessageProvider,
-  NDialogProvider,
-  NLayout,
-  NLayoutSider,
-  NLayoutHeader,
-  NLayoutContent,
-  NMenu,
-  NBreadcrumb,
-  NBreadcrumbItem,
-  NSpace,
-  NButton,
-  type MenuOption,
-} from 'naive-ui'
 
 const authStore = useAuthStore()
-const collapsed = ref(false)
+const drawer = ref(true)
+const mini = ref(false)
 const activeMenu = ref('dashboard')
 
-const themeOverrides = {
-  common: {
-    primaryColor: '#2080f0',
-    primaryColorHover: '#1660c0',
-    borderRadius: '10px',
-  },
-  Card: {
-    borderRadius: '16px',
-  },
-  Menu: {
-    itemBorderRadius: '10px',
-  },
-}
-
-const menuOptions: MenuOption[] = [
-  { label: '仪表盘', key: 'dashboard' },
-  { label: '应用管理', key: 'apps' },
-  { label: '用户管理', key: 'users' },
-  { label: '评论管理', key: 'comments' },
-  { label: '个人设置', key: 'settings' },
+const menuItems = [
+  { title: '仪表盘', key: 'dashboard', icon: 'mdi-view-dashboard' },
+  { title: '应用管理', key: 'apps', icon: 'mdi-cellphone' },
+  { title: '用户管理', key: 'users', icon: 'mdi-account-group' },
+  { title: '评论管理', key: 'comments', icon: 'mdi-comment-text-multiple' },
+  { title: '个人设置', key: 'settings', icon: 'mdi-cog' },
 ]
 
 const route = useRoute()
@@ -108,16 +70,16 @@ watch(
 )
 
 const breadcrumbs = computed(() => {
-  const map: Record<string, string[]> = {
-    dashboard: ['仪表盘'],
-    apps: ['应用管理'],
-    'apps/create': ['应用管理', '创建应用'],
-    users: ['用户管理'],
-    comments: ['评论管理'],
-    settings: ['个人设置'],
+  const map: Record<string, any[]> = {
+    dashboard: [{ title: '仪表盘', disabled: true }],
+    apps: [{ title: '应用管理', disabled: true }],
+    'apps/create': [{ title: '应用管理', to: '/admin/apps' }, { title: '创建应用', disabled: true }],
+    users: [{ title: '用户管理', disabled: true }],
+    comments: [{ title: '评论管理', disabled: true }],
+    settings: [{ title: '个人设置', disabled: true }],
   }
   const key = route.path.replace('/admin', '').replace(/^\//, '') || 'dashboard'
-  return map[key] || ['仪表盘']
+  return map[key] || [{ title: '仪表盘', disabled: true }]
 })
 
 const handleMenuClick = (key: string) => {
@@ -138,12 +100,6 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.admin-layout {
-  min-height: 100vh;
-}
-.sider {
-  background: #fff;
-}
 .logo-wrapper {
   display: flex;
   align-items: center;
@@ -162,29 +118,23 @@ const handleLogout = () => {
   font-size: 20px;
   background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
   border-radius: 10px;
+  flex-shrink: 0;
 }
 .logo-text {
   font-size: 16px;
   font-weight: 600;
   color: #1a1a2e;
 }
-.admin-header {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  background: #fff;
-}
-.header-left {
-  flex: 1;
-}
 .user-info {
   color: #666;
   font-size: 14px;
+  margin-right: 8px;
 }
 .admin-content {
   padding: 24px;
   background: #f5f5f5;
+}
+:deep(.v-navigation-drawer) {
+  border-right: 1px solid #f0f0f0;
 }
 </style>

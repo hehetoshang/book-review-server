@@ -5,38 +5,65 @@
         <h1 class="page-title">评论管理</h1>
       </div>
 
-      <n-card class="table-card">
-        <n-space class="mb-4" wrap>
-          <n-input v-model:value="search" placeholder="搜索评论内容" style="width: 200px" />
-          <n-select v-model:value="filterAppId" :options="appOptions" placeholder="选择应用" style="width: 180px" clearable />
-          <n-button @click="loadComments">筛选</n-button>
-        </n-space>
+      <v-card class="table-card" variant="outlined">
+        <v-card-text>
+          <v-row class="mb-4" align="center">
+            <v-col cols="auto">
+              <v-text-field
+                v-model="search"
+                placeholder="搜索评论内容"
+                density="compact"
+                variant="outlined"
+                hide-details
+                style="max-width: 200px"
+              />
+            </v-col>
+            <v-col cols="auto">
+              <v-select
+                v-model="filterAppId"
+                :items="appOptions"
+                placeholder="选择应用"
+                density="compact"
+                variant="outlined"
+                clearable
+                hide-details
+                style="max-width: 180px"
+              />
+            </v-col>
+            <v-col cols="auto">
+              <v-btn @click="loadComments">筛选</v-btn>
+            </v-col>
+          </v-row>
 
-        <n-data-table
-          :columns="columns"
-          :data="comments"
-          :loading="loading"
-          :pagination="pagination"
-          :row-key="(row: any) => row.id"
-          remote
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
-        />
-      </n-card>
+          <v-data-table-server
+            :headers="headers"
+            :items="comments"
+            :loading="loading"
+            :items-length="total"
+            :items-per-page="pageSize"
+            :page="page"
+            :items-per-page-options="[10, 20, 50]"
+            @update:options="handleOptionsChange"
+          >
+            <template v-slot:item.createdAt="{ item }">
+              {{ new Date(item.createdAt).toLocaleString('zh-CN') }}
+            </template>
+            <template v-slot:item.actions="{ item }">
+              <v-btn size="small" variant="text" color="error" @click="handleDelete(item)">
+                删除
+              </v-btn>
+            </template>
+          </v-data-table-server>
+        </v-card-text>
+      </v-card>
     </div>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
-import {
-  NCard, NSpace, NInput, NButton, NDataTable, NSelect, useMessage, useDialog,
-  type DataTableColumns,
-} from 'naive-ui'
+import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
-const message = useMessage()
-const dialog = useDialog()
 const comments = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
@@ -44,35 +71,23 @@ const filterAppId = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
-const appOptions = ref<{ label: string; value: string }[]>([])
+const appOptions = ref<{ title: string; value: string }[]>([])
 
-const pagination = computed(() => ({
-  page: page.value,
-  pageSize: pageSize.value,
-  pageCount: Math.ceil(total.value / pageSize.value) || 1,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50],
-}))
-
-const columns: DataTableColumns<any> = [
+const headers = [
   { title: 'ID', key: 'id', width: 70 },
   { title: '应用', key: 'appName', width: 140 },
-  { title: '章节', key: 'chapterName', ellipsis: { tooltip: true } },
-  { title: '内容', key: 'content', ellipsis: { tooltip: true }, width: 280 },
+  { title: '章节', key: 'chapterName' },
+  { title: '内容', key: 'content', width: 280 },
   { title: '用户', key: 'nickname', width: 120 },
-  { 
-    title: '时间', 
-    key: 'createdAt', 
-    width: 160,
-    render: (row) => new Date(row.createdAt).toLocaleString('zh-CN'),
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 80,
-    render: (row) => h(NButton, { size: 'small', type: 'error', onClick: () => handleDelete(row) }, { default: () => '删除' }),
-  },
+  { title: '时间', key: 'createdAt', width: 160 },
+  { title: '操作', key: 'actions', width: 80, sortable: false },
 ]
+
+const handleOptionsChange = (options: any) => {
+  page.value = options.page
+  pageSize.value = options.itemsPerPage
+  loadComments()
+}
 
 const loadComments = async () => {
   loading.value = true
@@ -90,7 +105,9 @@ const loadComments = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '加载失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '加载失败')
+    }
   } finally {
     loading.value = false
   }
@@ -104,44 +121,33 @@ const loadApps = async () => {
       query: { limit: '100' },
     })
     if (res.data) {
-      appOptions.value = res.data.list.map((a: any) => ({ label: a.name, value: a.appId }))
+      appOptions.value = res.data.list.map((a: any) => ({ title: a.name, value: a.appId }))
     }
   } catch {
     // ignore
   }
 }
 
-const handlePageChange = (p: number) => {
-  page.value = p
-  loadComments()
-}
-
-const handlePageSizeChange = (ps: number) => {
-  pageSize.value = ps
-  page.value = 1
-  loadComments()
-}
-
 const handleDelete = (comment: any) => {
-  dialog.warning({
-    title: '确认删除',
-    content: `确定要删除这条评论吗？`,
-    positiveText: '删除',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        const { token } = useAuthStore()
-        await $fetch(`/api/admin/comments/${comment.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token.value}` },
-        })
-        message.success('评论已删除')
-        loadComments()
-      } catch (e: any) {
-        message.error(e.data?.statusMessage || '删除失败')
+  if (!confirm('确定要删除这条评论吗？')) return
+
+  ;(async () => {
+    try {
+      const { token } = useAuthStore()
+      await $fetch(`/api/admin/comments/${comment.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token.value}` },
+      })
+      if (import.meta.client) {
+        alert('评论已删除')
       }
-    },
-  })
+      loadComments()
+    } catch (e: any) {
+      if (import.meta.client) {
+        alert(e.data?.statusMessage || '删除失败')
+      }
+    }
+  })()
 }
 
 onMounted(() => {
@@ -162,8 +168,5 @@ onMounted(() => {
 }
 .table-card {
   border-radius: 16px;
-}
-.mb-4 {
-  margin-bottom: 16px;
 }
 </style>

@@ -2,75 +2,113 @@
   <AdminLayout>
     <div class="app-detail" v-if="app">
       <div class="page-header">
-        <n-button @click="handleBack">返回</n-button>
+        <v-btn variant="text" @click="handleBack">返回</v-btn>
         <h1 class="page-title">应用详情</h1>
       </div>
 
-      <n-card title="基本信息" class="detail-card">
-        <n-form label-placement="left" label-width="100">
-          <n-form-item label="App ID">
-            <n-input :value="app.appId" readonly>
-              <template #suffix>
-                <n-button text @click="copyText(app.appId)">复制</n-button>
+      <v-card class="detail-card" variant="outlined">
+        <template v-slot:title>
+          <span class="card-title">基本信息</span>
+        </template>
+        <v-card-text>
+          <v-form>
+            <v-text-field
+              label="App ID"
+              :value="app.appId"
+              variant="outlined"
+              readonly
+            >
+              <template v-slot:append>
+                <v-btn variant="text" size="small" @click="copyText(app.appId)">复制</v-btn>
               </template>
-            </n-input>
-          </n-form-item>
-          <n-form-item label="应用名称">
-            <n-input v-model:value="editForm.name" />
-          </n-form-item>
-          <n-form-item label="允许域名">
-            <n-input v-model:value="editForm.domains" placeholder="多个域名用逗号分隔" />
-          </n-form-item>
-          <n-form-item label="状态">
-            <n-switch v-model:value="editForm.isActive" />
-          </n-form-item>
-          <n-form-item>
-            <n-button type="primary" :loading="updating" @click="handleUpdate">保存</n-button>
-          </n-form-item>
-        </n-form>
-      </n-card>
+            </v-text-field>
+            <v-text-field
+              v-model="editForm.name"
+              label="应用名称"
+              variant="outlined"
+            />
+            <v-text-field
+              v-model="editForm.domains"
+              label="允许域名"
+              placeholder="多个域名用逗号分隔"
+              variant="outlined"
+            />
+            <v-switch
+              v-model="editForm.isActive"
+              label="状态"
+              :true-value="true"
+              :false-value="false"
+            />
+            <v-btn
+              color="primary"
+              :loading="updating"
+              @click="handleUpdate"
+            >
+              保存
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
 
-      <n-card title="API 密钥" class="detail-card">
-        <n-alert type="warning" class="mb-4">
-          Secret 用于签名代理登录 Token，请妥善保管，切勿泄露。
-        </n-alert>
-        <n-form label-placement="left" label-width="100">
-          <n-form-item label="Secret">
-            <n-input :value="secret" type="password" show-password-on="click" readonly>
-              <template #suffix>
-                <n-button text @click="copyText(secret)">复制</n-button>
+      <v-card class="detail-card" variant="outlined">
+        <template v-slot:title>
+          <span class="card-title">API 密钥</span>
+        </template>
+        <v-card-text>
+          <v-alert type="warning" variant="tonal" class="mb-4">
+            Secret 用于签名代理登录 Token，请妥善保管，切勿泄露。
+          </v-alert>
+          <v-form>
+            <v-text-field
+              label="Secret"
+              :value="secret"
+              type="password"
+              variant="outlined"
+              readonly
+            >
+              <template v-slot:append>
+                <v-btn variant="text" size="small" @click="copyText(secret)">复制</v-btn>
               </template>
-            </n-input>
-          </n-form-item>
-          <n-form-item>
-            <n-button type="warning" :loading="resetting" @click="handleResetSecret">
+            </v-text-field>
+            <v-btn
+              color="warning"
+              :loading="resetting"
+              @click="handleResetSecret"
+            >
               重置 Secret
-            </n-button>
-          </n-form-item>
-        </n-form>
-      </n-card>
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
 
-      <n-card title="统计信息" class="detail-card">
-        <n-descriptions :column="2">
-          <n-descriptions-item label="评论总数">
-            {{ app._count?.comments || 0 }}
-          </n-descriptions-item>
-          <n-descriptions-item label="创建时间">
-            {{ new Date(app.createdAt).toLocaleString('zh-CN') }}
-          </n-descriptions-item>
-        </n-descriptions>
-      </n-card>
+      <v-card class="detail-card" variant="outlined">
+        <template v-slot:title>
+          <span class="card-title">统计信息</span>
+        </template>
+        <v-card-text>
+          <v-table density="compact">
+            <tbody>
+              <tr>
+                <td class="stat-label">评论总数</td>
+                <td>{{ app._count?.comments || 0 }}</td>
+              </tr>
+              <tr>
+                <td class="stat-label">创建时间</td>
+                <td>{{ new Date(app.createdAt).toLocaleString('zh-CN') }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+      </v-card>
     </div>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NCard, NForm, NFormItem, NInput, NButton, NSwitch, NDescriptions, NDescriptionsItem, NAlert, useMessage } from 'naive-ui'
 import AdminLayout from '~/components/AdminLayout.vue'
 
 const route = useRoute()
-const message = useMessage()
 const app = ref<any>(null)
 const secret = ref('')
 const editForm = ref({ name: '', domains: '', isActive: true })
@@ -97,7 +135,9 @@ const loadApp = async () => {
       secret.value = secretRes.data.secret
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '加载失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '加载失败')
+    }
   }
 }
 
@@ -110,10 +150,14 @@ const handleUpdate = async () => {
       headers: { Authorization: `Bearer ${token.value}` },
       body: editForm.value,
     })
-    message.success('更新成功')
+    if (import.meta.client) {
+      alert('更新成功')
+    }
     loadApp()
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '更新失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '更新失败')
+    }
   } finally {
     updating.value = false
   }
@@ -129,10 +173,14 @@ const handleResetSecret = async () => {
     })
     if (res.data) {
       secret.value = res.data.secret
-      message.success('Secret 已重置')
+      if (import.meta.client) {
+        alert('Secret 已重置')
+      }
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '重置失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '重置失败')
+    }
   } finally {
     resetting.value = false
   }
@@ -140,7 +188,11 @@ const handleResetSecret = async () => {
 
 const copyText = (text?: string) => {
   if (text && navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => message.success('已复制'))
+    navigator.clipboard.writeText(text).then(() => {
+      if (import.meta.client) {
+        alert('已复制')
+      }
+    })
   }
 }
 
@@ -168,7 +220,15 @@ onMounted(loadApp)
   border-radius: 16px;
   margin-bottom: 20px;
 }
+.card-title {
+  font-weight: 600;
+}
 .mb-4 {
   margin-bottom: 16px;
+}
+.stat-label {
+  font-weight: 600;
+  width: 120px;
+  color: #666;
 }
 </style>

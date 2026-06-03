@@ -1,39 +1,39 @@
 <template>
   <div class="home-page">
     <div class="hero">
-      <div class="logo">💬</div>
+      <div class="logo">&#128172;</div>
       <h1>评论开放平台</h1>
       <p class="subtitle">全栈、可嵌入的第三方评论服务</p>
       <div class="actions">
-        <n-button type="primary" size="large" @click="navigateTo('/login')">
+        <v-btn color="primary" size="x-large" @click="navigateTo('/login')">
           用户登录
-        </n-button>
-        <n-button size="large" @click="navigateTo('/admin/login')">
+        </v-btn>
+        <v-btn size="x-large" @click="navigateTo('/admin/login')">
           管理后台
-        </n-button>
+        </v-btn>
       </div>
     </div>
     
     <div class="features">
       <div class="feature-card">
-        <div class="icon blue">🔐</div>
+        <div class="icon blue">&#128272;</div>
         <h3>安全认证</h3>
         <p>bcrypt 密码哈希 + JWT 令牌，支持第三方代理登录</p>
       </div>
       <div class="feature-card">
-        <div class="icon green">📱</div>
+        <div class="icon green">&#128241;</div>
         <h3>多租户隔离</h3>
         <p>每个应用独立的评论空间，支持自定义域名限制</p>
       </div>
       <div class="feature-card">
-        <div class="icon orange">💬</div>
+        <div class="icon orange">&#128172;</div>
         <h3>嵌入评论</h3>
         <p>iframe 嵌入 + JS SDK，支持 Vue/Flutter/React Native</p>
       </div>
       <div class="feature-card">
-        <div class="icon purple">📊</div>
+        <div class="icon purple">&#128202;</div>
         <h3>管理后台</h3>
-        <p>Naive UI 构建，应用管理、评论审核、统计仪表盘</p>
+        <p>Vuetify 构建，应用管理、评论审核、统计仪表盘</p>
       </div>
     </div>
 
@@ -54,7 +54,6 @@
 </template>
 
 <script setup lang="ts">
-import { NButton } from 'naive-ui'
 </script>
 
 <style scoped>

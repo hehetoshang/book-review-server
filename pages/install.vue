@@ -1,104 +1,150 @@
 <template>
   <div class="install-page">
     <div class="install-container">
-      <div class="install-card">
-        <div class="logo-section">
-          <div class="logo">💬</div>
-          <h1>评论平台安装向导</h1>
-          <p class="subtitle">欢迎使用评论开放平台，请完成以下配置</p>
-        </div>
+      <v-card class="install-card" elevation="4">
+        <v-card-text class="pa-8">
+          <div class="logo-section">
+            <div class="logo">&#128172;</div>
+            <h1>评论平台安装向导</h1>
+            <p class="subtitle">欢迎使用评论开放平台，请完成以下配置</p>
+          </div>
 
-        <n-steps :current="currentStep" class="steps">
-          <n-step title="检查环境" />
-          <n-step title="管理员设置" />
-          <n-step title="完成安装" />
-        </n-steps>
-
-        <div class="step-content">
-          <!-- Step 1: 环境检查 -->
-          <div v-if="currentStep === 1" class="step-panel">
-            <h3>环境检查</h3>
-            <div class="check-list">
-              <div class="check-item" :class="{ success: dbConnected, error: !dbConnected && checked }">
-                <span class="icon">{{ dbConnected ? '✓' : (checked ? '✗' : '...') }}</span>
-                <span>数据库连接</span>
-              </div>
-              <div class="check-item success">
-                <span class="icon">✓</span>
-                <span>运行环境</span>
-              </div>
+          <v-progress-linear
+            :model-value="progressValue"
+            color="primary"
+            height="4"
+            class="mb-6"
+            rounded
+          >
+            <div class="steps-labels">
+              <span :class="{ active: currentStep === 1, done: currentStep > 1 }">检查环境</span>
+              <span :class="{ active: currentStep === 2, done: currentStep > 2 }">管理员设置</span>
+              <span :class="{ active: currentStep === 3 }">完成安装</span>
             </div>
-            <n-button type="primary" block size="large" :loading="checking" :disabled="!dbConnected" @click="currentStep = 2">
-              {{ dbConnected ? '下一步' : '检查中...' }}
-            </n-button>
-          </div>
+          </v-progress-linear>
 
-          <!-- Step 2: 管理员设置 -->
-          <div v-if="currentStep === 2" class="step-panel">
-            <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
-              <n-form-item label="管理员邮箱" path="email">
-                <n-input v-model:value="form.email" type="email" placeholder="admin@example.com" />
-              </n-form-item>
-              <n-form-item label="管理员昵称" path="nickname">
-                <n-input v-model:value="form.nickname" placeholder="管理员" />
-              </n-form-item>
-              <n-form-item label="管理员密码" path="password">
-                <n-input v-model:value="form.password" type="password" placeholder="请输入密码（6-50位）" />
-              </n-form-item>
-              <n-form-item label="确认密码" path="confirmPassword">
-                <n-input v-model:value="form.confirmPassword" type="password" placeholder="请再次输入密码" />
-              </n-form-item>
-              <n-form-item label="站点名称" path="siteName">
-                <n-input v-model:value="form.siteName" placeholder="我的评论平台" />
-              </n-form-item>
-            </n-form>
-            <n-space>
-              <n-button @click="currentStep = 1">上一步</n-button>
-              <n-button type="primary" :loading="installing" @click="handleInstall">
-                开始安装
-              </n-button>
-            </n-space>
-          </div>
-
-          <!-- Step 3: 完成安装 -->
-          <div v-if="currentStep === 3" class="step-panel success-panel">
-            <div class="success-icon">🎉</div>
-            <h3>安装完成！</h3>
-            <p>您的评论平台已成功安装</p>
-            <div class="info-box">
-              <p><strong>管理员账号：</strong>{{ form.email }}</p>
-              <p><strong>默认应用ID：</strong>{{ appId }}</p>
+          <div class="step-content">
+            <!-- Step 1: 环境检查 -->
+            <div v-if="currentStep === 1" class="step-panel">
+              <h3>环境检查</h3>
+              <div class="check-list">
+                <div class="check-item" :class="{ success: dbConnected, error: !dbConnected && checked }">
+                  <span class="icon">{{ dbConnected ? '✓' : (checked ? '✗' : '...') }}</span>
+                  <span>数据库连接</span>
+                </div>
+                <div class="check-item success">
+                  <span class="icon">✓</span>
+                  <span>运行环境</span>
+                </div>
+              </div>
+              <v-btn
+                color="primary"
+                block
+                size="x-large"
+                :loading="checking"
+                :disabled="!dbConnected"
+                @click="currentStep = 2"
+              >
+                {{ dbConnected ? '下一步' : '检查中...' }}
+              </v-btn>
             </div>
-            <n-alert type="warning" class="mt-4">
-              请妥善保管您的管理员账号和密码
-            </n-alert>
-            <n-button type="primary" block size="large" class="mt-4" @click="goToLogin">
-              进入管理后台
-            </n-button>
+
+            <!-- Step 2: 管理员设置 -->
+            <div v-if="currentStep === 2" class="step-panel">
+              <v-form ref="formRef" v-model="formValid">
+                <v-text-field
+                  v-model="form.email"
+                  label="管理员邮箱"
+                  type="email"
+                  placeholder="admin@example.com"
+                  variant="outlined"
+                  :rules="emailRules"
+                />
+                <v-text-field
+                  v-model="form.nickname"
+                  label="管理员昵称"
+                  placeholder="管理员"
+                  variant="outlined"
+                  :rules="[v => !!v || '请输入昵称']"
+                />
+                <v-text-field
+                  v-model="form.password"
+                  label="管理员密码"
+                  type="password"
+                  placeholder="请输入密码（6-50位）"
+                  variant="outlined"
+                  :rules="passwordRules"
+                />
+                <v-text-field
+                  v-model="form.confirmPassword"
+                  label="确认密码"
+                  type="password"
+                  placeholder="请再次输入密码"
+                  variant="outlined"
+                  :rules="[v => !!v || '请再次输入密码', v => v === form.password || '两次输入的密码不一致']"
+                />
+                <v-text-field
+                  v-model="form.siteName"
+                  label="站点名称"
+                  placeholder="我的评论平台"
+                  variant="outlined"
+                />
+              </v-form>
+              <v-row class="mt-4">
+                <v-col cols="auto">
+                  <v-btn @click="currentStep = 1">上一步</v-btn>
+                </v-col>
+                <v-col cols="auto">
+                  <v-btn color="primary" :loading="installing" @click="handleInstall">
+                    开始安装
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </div>
+
+            <!-- Step 3: 完成安装 -->
+            <div v-if="currentStep === 3" class="step-panel success-panel">
+              <div class="success-icon">&#127881;</div>
+              <h3>安装完成！</h3>
+              <p>您的评论平台已成功安装</p>
+              <div class="info-box">
+                <p><strong>管理员账号：</strong>{{ form.email }}</p>
+                <p><strong>默认应用ID：</strong>{{ appId }}</p>
+              </div>
+              <v-alert type="warning" variant="tonal" class="mt-4">
+                请妥善保管您的管理员账号和密码
+              </v-alert>
+              <v-btn
+                color="primary"
+                block
+                size="x-large"
+                class="mt-4"
+                @click="goToLogin"
+              >
+                进入管理后台
+              </v-btn>
+            </div>
           </div>
-        </div>
-      </div>
+        </v-card-text>
+      </v-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import {
-  NSteps, NStep, NForm, NFormItem, NInput, NButton, NSpace, NAlert, useMessage,
-} from 'naive-ui'
+import { ref, computed } from 'vue'
 
 definePageMeta({
   layout: 'blank',
 })
 
-const message = useMessage()
 const currentStep = ref(1)
 const checking = ref(true)
 const checked = ref(false)
 const installing = ref(false)
 const dbConnected = ref(false)
 const appId = ref('')
+const formValid = ref(false)
 
 const form = ref({
   email: '',
@@ -108,27 +154,26 @@ const form = ref({
   siteName: '',
 })
 
-const rules = {
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
-  ],
-  nickname: { required: true, message: '请输入昵称', trigger: 'blur' },
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 50, message: '密码长度需在6-50个字符之间', trigger: 'blur' },
-  ],
-  confirmPassword: {
-    required: true,
-    message: '请再次输入密码',
-    trigger: 'blur',
-    validator: (_rule: any, value: string) => {
-      if (value !== form.value.password) {
-        return new Error('两次输入的密码不一致')
-      }
-      return true
-    },
-  },
+const formRef = ref()
+
+const emailRules = [
+  (v: string) => !!v || '请输入邮箱',
+  (v: string) => /.+@.+\..+/.test(v) || '请输入正确的邮箱格式',
+]
+const passwordRules = [
+  (v: string) => !!v || '请输入密码',
+  (v: string) => (v.length >= 6 && v.length <= 50) || '密码长度需在6-50个字符之间',
+]
+
+const progressValue = computed(() => {
+  return ((currentStep.value - 1) / 2) * 100
+})
+
+const showToast = (msg: string, type: 'info' | 'error' = 'info') => {
+  // Simple alert-based toast since useMessage is from naive-ui
+  if (import.meta.client) {
+    alert(msg)
+  }
 }
 
 const checkEnvironment = async () => {
@@ -139,7 +184,7 @@ const checkEnvironment = async () => {
     
     if (res.data?.isInstalled) {
       // Already installed, redirect to home
-      message.info('系统已安装，正在跳转...')
+      showToast('系统已安装，正在跳转...', 'info')
       setTimeout(() => navigateTo('/'), 500)
       return
     }
@@ -147,7 +192,7 @@ const checkEnvironment = async () => {
     dbConnected.value = true
   } catch {
     checked.value = true
-    message.error('数据库连接失败，请检查配置')
+    showToast('数据库连接失败，请检查配置', 'error')
   } finally {
     checking.value = false
   }
@@ -169,7 +214,7 @@ const handleInstall = async () => {
       }
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '安装失败')
+    showToast(e.data?.statusMessage || '安装失败', 'error')
   } finally {
     installing.value = false
   }
@@ -199,10 +244,7 @@ onMounted(() => {
   max-width: 560px;
 }
 .install-card {
-  background: white;
   border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 .logo-section {
   text-align: center;
@@ -230,8 +272,20 @@ onMounted(() => {
   color: #666;
   font-size: 14px;
 }
-.steps {
-  margin-bottom: 32px;
+.steps-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0;
+  font-size: 12px;
+  color: #999;
+}
+.steps-labels span.active {
+  color: #1976d2;
+  font-weight: 600;
+}
+.steps-labels span.done {
+  color: #4caf50;
 }
 .step-content {
   min-height: 280px;
@@ -290,5 +344,8 @@ onMounted(() => {
 }
 .mt-4 {
   margin-top: 16px;
+}
+.mb-6 {
+  margin-bottom: 24px;
 }
 </style>

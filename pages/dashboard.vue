@@ -1,65 +1,75 @@
 <template>
   <div class="dashboard-page">
     <div class="dashboard-header">
-      <div class="logo">💬</div>
+      <div class="logo">&#128172;</div>
       <div class="header-right">
         <span class="user-name">{{ authStore.user?.nickname }}</span>
-        <n-button size="small" @click="handleLogout">退出</n-button>
+        <v-btn size="small" variant="text" @click="handleLogout">退出</v-btn>
       </div>
     </div>
 
     <div class="dashboard-content">
-      <n-card title="我的评论" class="comments-card">
-        <template #header-extra>
+      <v-card class="comments-card" variant="outlined">
+        <template v-slot:title>
+          <span class="card-title">我的评论</span>
           <span class="total">共 {{ total }} 条</span>
         </template>
 
-        <div v-if="loading" class="loading">
-          <n-spin size="large" />
-        </div>
-
-        <div v-else-if="comments.length === 0" class="empty">
-          暂无评论记录
-        </div>
-
-        <div v-else class="comment-list">
-          <div v-for="comment in comments" :key="comment.id" class="comment-item">
-            <div class="comment-header">
-              <span class="app-name">{{ comment.appName }}</span>
-              <span class="chapter">{{ comment.chapterName }}</span>
-              <span class="time">{{ formatTime(comment.createdAt) }}</span>
-            </div>
-            <p class="comment-content">{{ truncate(comment.content, 150) }}</p>
+        <v-card-text>
+          <div v-if="loading" class="loading">
+            <v-progress-circular indeterminate color="primary" size="48" />
           </div>
-        </div>
 
-        <div v-if="totalPages > 1" class="pagination">
-          <n-pagination v-model:page="page" :page-count="totalPages" @update:page="loadComments" />
-        </div>
-      </n-card>
+          <div v-else-if="comments.length === 0" class="empty">
+            暂无评论记录
+          </div>
 
-      <n-card title="快捷入口" class="quick-card">
-        <n-space>
-          <n-button @click="navigateTo('/docs')">开发者文档</n-button>
-          <n-button v-if="authStore.isAdmin" type="primary" @click="navigateTo('/admin')">
-            管理后台
-          </n-button>
-        </n-space>
-      </n-card>
+          <div v-else class="comment-list">
+            <div v-for="comment in comments" :key="comment.id" class="comment-item">
+              <div class="comment-header">
+                <span class="app-name">{{ comment.appName }}</span>
+                <span class="chapter">{{ comment.chapterName }}</span>
+                <span class="time">{{ formatTime(comment.createdAt) }}</span>
+              </div>
+              <p class="comment-content">{{ truncate(comment.content, 150) }}</p>
+            </div>
+          </div>
+
+          <div v-if="totalPages > 1" class="pagination">
+            <v-pagination v-model="page" :length="totalPages" @update:model-value="loadComments" density="compact" />
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="quick-card" variant="outlined">
+        <template v-slot:title>
+          <span class="card-title">快捷入口</span>
+        </template>
+        <v-card-text>
+          <v-row>
+            <v-col cols="auto">
+              <v-btn @click="navigateTo('/docs')">开发者文档</v-btn>
+            </v-col>
+            <v-col cols="auto" v-if="authStore.isAdmin">
+              <v-btn color="primary" @click="navigateTo('/admin')">
+                管理后台
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NCard, NButton, NSpace, NSpin, NPagination, useMessage } from 'naive-ui'
 
 definePageMeta({
   middleware: 'auth-check',
 })
 
 const authStore = useAuthStore()
-const message = useMessage()
 const comments = ref<any[]>([])
 const loading = ref(false)
 const page = ref(1)
@@ -146,9 +156,14 @@ onMounted(() => {
   border-radius: 16px;
   margin-bottom: 20px;
 }
+.card-title {
+  font-weight: 600;
+}
 .total {
   color: #999;
   font-size: 14px;
+  font-weight: normal;
+  margin-left: 12px;
 }
 .loading,
 .empty {

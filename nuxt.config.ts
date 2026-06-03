@@ -4,12 +4,54 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/content',
     '@pinia/nuxt',
-    '@bg-dev/nuxt-naiveui',
+    'nuxt-vuetify',
   ],
 
   css: [
     '~/assets/global.css',
+    'vuetify/styles',
+    '@mdi/font/css/materialdesignicons.css',
   ],
+
+  vuetify: {
+    moduleOptions: {},
+    vuetifyOptions: {
+      defaults: {
+        VBtn: {
+          rounded: 'lg',
+          variant: 'flat',
+        },
+        VCard: {
+          rounded: 'lg',
+        },
+        VTextField: {
+          variant: 'outlined',
+          density: 'comfortable',
+        },
+        VPasswordField: {
+          variant: 'outlined',
+          density: 'comfortable',
+        },
+      },
+      theme: {
+        defaultTheme: 'light',
+        themes: {
+          light: {
+            colors: {
+              primary: '#2080f0',
+              secondary: '#63e2b7',
+            },
+          },
+          dark: {
+            colors: {
+              primary: '#63e2b7',
+              secondary: '#2080f0',
+            },
+          },
+        },
+      },
+    },
+  },
 
   routeRules: {
     '/embed': {
@@ -52,9 +94,6 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: ['jsdom', 'dompurify'],
-    },
-    ssr: {
-      noExternal: ['naive-ui'],
     },
   },
 })

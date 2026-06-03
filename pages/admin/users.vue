@@ -5,64 +5,117 @@
         <h1 class="page-title">用户管理</h1>
       </div>
 
-      <n-card class="table-card">
-        <n-space class="mb-4">
-          <n-input v-model:value="search" placeholder="搜索邮箱或昵称" style="width: 240px" />
-          <n-button @click="loadUsers">搜索</n-button>
-        </n-space>
+      <v-card class="table-card" variant="outlined">
+        <v-card-text>
+          <v-row class="mb-4" align="center">
+            <v-col cols="auto">
+              <v-text-field
+                v-model="search"
+                placeholder="搜索邮箱或昵称"
+                density="compact"
+                variant="outlined"
+                hide-details
+                style="max-width: 240px"
+              />
+            </v-col>
+            <v-col cols="auto">
+              <v-btn @click="loadUsers">搜索</v-btn>
+            </v-col>
+          </v-row>
 
-        <n-data-table
-          :columns="columns"
-          :data="users"
-          :loading="loading"
-          :pagination="pagination"
-          :row-key="(row: any) => row.id"
-          remote
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
-        />
-      </n-card>
+          <v-data-table-server
+            :headers="headers"
+            :items="users"
+            :loading="loading"
+            :items-length="total"
+            :items-per-page="pageSize"
+            :page="page"
+            :items-per-page-options="[10, 20, 50]"
+            @update:options="handleOptionsChange"
+          >
+            <template v-slot:item.role="{ item }">
+              <v-chip :color="item.role === 'admin' ? 'primary' : 'grey'" size="small" variant="flat">
+                {{ item.role === 'admin' ? '管理员' : '用户' }}
+              </v-chip>
+            </template>
+            <template v-slot:item.isActive="{ item }">
+              <v-chip :color="item.isActive ? 'success' : 'grey'" size="small" variant="flat">
+                {{ item.isActive ? '启用' : '禁用' }}
+              </v-chip>
+            </template>
+            <template v-slot:item.createdAt="{ item }">
+              {{ new Date(item.createdAt).toLocaleString('zh-CN') }}
+            </template>
+            <template v-slot:item.actions="{ item }">
+              <div class="action-buttons">
+                <v-btn size="small" variant="text" @click="handleEdit(item)">
+                  编辑
+                </v-btn>
+                <v-btn
+                  size="small"
+                  variant="text"
+                  :color="item.isActive ? 'warning' : 'success'"
+                  @click="toggleStatus(item)"
+                >
+                  {{ item.isActive ? '禁用' : '启用' }}
+                </v-btn>
+              </div>
+            </template>
+          </v-data-table-server>
+        </v-card-text>
+      </v-card>
 
-      <n-modal v-model:show="showEditModal" preset="dialog" :title="editingUser ? '编辑用户' : '查看用户'">
-        <template #default>
-          <n-form :model="editForm" label-placement="top">
-            <n-form-item label="邮箱" :label-width="80">
-              <n-input :value="editForm.email" readonly />
-            </n-form-item>
-            <n-form-item label="昵称" :label-width="80">
-              <n-input v-model:value="editForm.nickname" />
-            </n-form-item>
-            <n-form-item label="角色" :label-width="80">
-              <n-select v-model:value="editForm.role" :options="roleOptions" />
-            </n-form-item>
-            <n-form-item label="状态" :label-width="80">
-              <n-switch v-model:value="editForm.isActive" />
-              <span>{{ editForm.isActive ? '启用' : '禁用' }}</span>
-            </n-form-item>
-          </n-form>
-        </template>
-        <template #action>
-          <n-space>
-            <n-button @click="showEditModal = false">取消</n-button>
-            <n-button type="primary" :loading="updating" @click="handleUpdateUser">
+      <v-dialog v-model="showEditModal" max-width="500">
+        <v-card>
+          <v-card-title>{{ editingUser ? '编辑用户' : '查看用户' }}</v-card-title>
+          <v-card-text>
+            <v-form>
+              <v-text-field
+                label="邮箱"
+                :value="editForm.email"
+                variant="outlined"
+                readonly
+              />
+              <v-text-field
+                v-model="editForm.nickname"
+                label="昵称"
+                variant="outlined"
+              />
+              <v-select
+                v-model="editForm.role"
+                label="角色"
+                :items="roleOptions"
+                variant="outlined"
+              />
+              <div class="switch-row">
+                <v-switch
+                  v-model="editForm.isActive"
+                  label="状态"
+                  color="success"
+                  :true-value="true"
+                  :false-value="false"
+                />
+                <span class="switch-label">{{ editForm.isActive ? '启用' : '禁用' }}</span>
+              </div>
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="showEditModal = false">取消</v-btn>
+            <v-btn color="primary" :loading="updating" @click="handleUpdateUser">
               保存
-            </n-button>
-          </n-space>
-        </template>
-      </n-modal>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
-import {
-  NCard, NSpace, NInput, NButton, NDataTable, NModal, NForm, NFormItem, NSelect, NSwitch, useMessage,
-  type DataTableColumns,
-} from 'naive-ui'
+import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
-const message = useMessage()
 const users = ref<any[]>([])
 const loading = ref(false)
 const updating = ref(false)
@@ -81,50 +134,25 @@ const editForm = ref({
 })
 
 const roleOptions = [
-  { label: '普通用户', value: 'user' },
-  { label: '管理员', value: 'admin' },
+  { title: '普通用户', value: 'user' },
+  { title: '管理员', value: 'admin' },
 ]
 
-const pagination = computed(() => ({
-  page: page.value,
-  pageSize: pageSize.value,
-  pageCount: Math.ceil(total.value / pageSize.value) || 1,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50],
-}))
-
-const columns: DataTableColumns<any> = [
+const headers = [
   { title: 'ID', key: 'id', width: 70 },
-  { title: '邮箱', key: 'email', ellipsis: { tooltip: true } },
+  { title: '邮箱', key: 'email' },
   { title: '昵称', key: 'nickname' },
-  { 
-    title: '角色', 
-    key: 'role', 
-    width: 100,
-    render: (row) => row.role === 'admin' ? '管理员' : '用户',
-  },
-  { 
-    title: '状态', 
-    key: 'isActive', 
-    width: 80,
-    render: (row) => row.isActive ? '启用' : '禁用',
-  },
-  {
-    title: '注册时间',
-    key: 'createdAt',
-    width: 160,
-    render: (row) => new Date(row.createdAt).toLocaleString('zh-CN'),
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 140,
-    render: (row) => h('div', { style: 'display:flex;gap:8px;' }, [
-      h(NButton, { size: 'small', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-      h(NButton, { size: 'small', type: row.isActive ? 'warning' : 'success', onClick: () => toggleStatus(row) }, { default: () => row.isActive ? '禁用' : '启用' }),
-    ]),
-  },
+  { title: '角色', key: 'role', width: 100 },
+  { title: '状态', key: 'isActive', width: 80 },
+  { title: '注册时间', key: 'createdAt', width: 160 },
+  { title: '操作', key: 'actions', width: 140, sortable: false },
 ]
+
+const handleOptionsChange = (options: any) => {
+  page.value = options.page
+  pageSize.value = options.itemsPerPage
+  loadUsers()
+}
 
 const loadUsers = async () => {
   loading.value = true
@@ -141,21 +169,12 @@ const loadUsers = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '加载失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '加载失败')
+    }
   } finally {
     loading.value = false
   }
-}
-
-const handlePageChange = (p: number) => {
-  page.value = p
-  loadUsers()
-}
-
-const handlePageSizeChange = (ps: number) => {
-  pageSize.value = ps
-  page.value = 1
-  loadUsers()
 }
 
 const handleEdit = (user: any) => {
@@ -184,11 +203,15 @@ const handleUpdateUser = async () => {
         isActive: editForm.value.isActive,
       },
     })
-    message.success('更新成功')
+    if (import.meta.client) {
+      alert('更新成功')
+    }
     showEditModal.value = false
     loadUsers()
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '更新失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '更新失败')
+    }
   } finally {
     updating.value = false
   }
@@ -202,10 +225,14 @@ const toggleStatus = async (user: any) => {
       headers: { Authorization: `Bearer ${token.value}` },
       body: { isActive: !user.isActive },
     })
-    message.success(user.isActive ? '已禁用' : '已启用')
+    if (import.meta.client) {
+      alert(user.isActive ? '已禁用' : '已启用')
+    }
     loadUsers()
   } catch (e: any) {
-    message.error(e.data?.statusMessage || '操作失败')
+    if (import.meta.client) {
+      alert(e.data?.statusMessage || '操作失败')
+    }
   }
 }
 
@@ -225,7 +252,18 @@ onMounted(loadUsers)
 .table-card {
   border-radius: 16px;
 }
-.mb-4 {
-  margin-bottom: 16px;
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.switch-label {
+  color: #666;
+  font-size: 14px;
+  margin-top: 16px;
 }
 </style>

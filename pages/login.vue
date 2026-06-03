@@ -1,52 +1,73 @@
 <template>
   <div class="login-page">
     <div class="login-container">
-      <div class="login-card">
-        <div class="logo-section">
-          <div class="logo">💬</div>
-          <h1>评论开放平台</h1>
-          <p class="subtitle">登录您的账号</p>
-        </div>
+      <v-card class="login-card" elevation="2">
+        <v-card-item class="logo-section">
+          <v-avatar size="64" class="logo mx-auto mb-3" color="primary">
+            <v-icon size="32" icon="mdi-message-text" color="white" />
+          </v-avatar>
+          <v-card-title class="text-h6 text-center">评论开放平台</v-card-title>
+          <v-card-subtitle class="text-center">登录您的账号</v-card-subtitle>
+        </v-card-item>
 
-        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleLogin">
-          <n-form-item label="邮箱" path="email">
-            <n-input v-model:value="form.email" type="email" placeholder="your@email.com" size="large" />
-          </n-form-item>
-          <n-form-item label="密码" path="password">
-            <n-input v-model:value="form.password" type="password" placeholder="请输入密码" size="large" @keyup.enter="handleLogin" />
-          </n-form-item>
-          <div v-if="error" class="error-msg">{{ error }}</div>
-          <n-button type="primary" block size="large" :loading="loading" @click="handleLogin">
-            登录
-          </n-button>
-        </n-form>
+        <v-card-text>
+          <v-alert v-if="error" type="error" variant="tonal" class="mb-4" density="compact">
+            {{ error }}
+          </v-alert>
 
-        <div class="footer">
-          <p>还没有账号？<a href="/register">立即注册</a></p>
-          <p class="admin-link"><a href="/admin/login">管理员入口</a></p>
-        </div>
-      </div>
+          <v-form @submit.prevent="handleLogin">
+            <v-text-field
+              v-model="form.email"
+              label="邮箱"
+              type="email"
+              placeholder="your@email.com"
+              prepend-inner-icon="mdi-email"
+              required
+            />
+            <v-text-field
+              v-model="form.password"
+              label="密码"
+              type="password"
+              placeholder="请输入密码"
+              prepend-inner-icon="mdi-lock"
+              required
+              @keyup.enter="handleLogin"
+            />
+            <v-btn
+              type="submit"
+              color="primary"
+              block
+              size="large"
+              :loading="loading"
+            >
+              登录
+            </v-btn>
+          </v-form>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="flex-column">
+          <p class="text-body-2 text-medium-emphasis mb-1">
+            还没有账号？<a href="/register" class="text-primary text-decoration-none">立即注册</a>
+          </p>
+          <p class="text-body-2 text-medium-emphasis">
+            <a href="/admin/login" class="text-primary text-decoration-none">管理员入口</a>
+          </p>
+        </v-card-actions>
+      </v-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { NForm, NFormItem, NInput, NButton } from 'naive-ui'
-
 definePageMeta({
   layout: 'blank',
 })
 
-const formRef = ref()
 const form = ref({ email: '', password: '' })
 const loading = ref(false)
 const error = ref('')
-
-const rules = {
-  email: { required: true, message: '请输入邮箱', trigger: 'blur' },
-  password: { required: true, message: '请输入密码', trigger: 'blur' },
-}
 
 const handleLogin = async () => {
   loading.value = true
@@ -81,69 +102,12 @@ const handleLogin = async () => {
 }
 .login-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
 }
 .login-card {
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-}
-.logo-section {
-  text-align: center;
-  margin-bottom: 32px;
+  border-radius: 16px;
 }
 .logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  font-size: 32px;
   background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
-  border-radius: 18px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(32, 128, 240, 0.3);
-}
-.logo-section h1 {
-  font-size: 22px;
-  color: #1a1a2e;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-.subtitle {
-  color: #666;
-  font-size: 14px;
-}
-.error-msg {
-  padding: 10px 12px;
-  background: rgba(208, 48, 80, 0.1);
-  color: #d03050;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-.footer {
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
-}
-.footer p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #666;
-}
-.footer a {
-  color: #2080f0;
-  text-decoration: none;
-}
-.footer a:hover {
-  text-decoration: underline;
-}
-.admin-link {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
 }
 </style>
