@@ -1,6 +1,17 @@
-export function useAuthStore() {
-  const user = useState<User | null>('auth-user', () => null)
-  const token = useState<string>('auth-token', () => '')
+import { defineStore } from 'pinia'
+
+interface User {
+  id: number
+  email: string
+  username: string
+  nickname: string
+  role: string
+  avatar: string | null
+}
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const token = ref<string>('')
 
   const setUser = (u: User | null) => {
     user.value = u
@@ -30,7 +41,7 @@ export function useAuthStore() {
     }
   }
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
 
   return {
@@ -43,4 +54,4 @@ export function useAuthStore() {
     isAuthenticated,
     isAdmin,
   }
-}
+})
