@@ -136,6 +136,8 @@
 import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
+const toast = useToast()
+
 const apps = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
@@ -179,9 +181,7 @@ const loadApps = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '加载失败')
-    }
+    toast.error(e, '加载失败')
   } finally {
     loading.value = false
   }
@@ -205,9 +205,7 @@ const handleCreateApp = async () => {
       loadApps()
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '创建失败')
-    }
+    toast.error(e, '创建失败')
   } finally {
     creating.value = false
   }
@@ -226,9 +224,7 @@ const toggleStatus = async (row: any) => {
     }
     loadApps()
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '操作失败')
-    }
+    toast.error(e, '操作失败')
   }
 }
 

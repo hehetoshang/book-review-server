@@ -116,6 +116,8 @@
 import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
+const toast = useToast()
+
 const users = ref<any[]>([])
 const loading = ref(false)
 const updating = ref(false)
@@ -169,9 +171,7 @@ const loadUsers = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '加载失败')
-    }
+    toast.error(e, '加载失败')
   } finally {
     loading.value = false
   }
@@ -209,9 +209,7 @@ const handleUpdateUser = async () => {
     showEditModal.value = false
     loadUsers()
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '更新失败')
-    }
+    toast.error(e, '更新失败')
   } finally {
     updating.value = false
   }
@@ -230,9 +228,7 @@ const toggleStatus = async (user: any) => {
     }
     loadUsers()
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '操作失败')
-    }
+    toast.error(e, '操作失败')
   }
 }
 

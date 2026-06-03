@@ -64,6 +64,8 @@
 import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
+const toast = useToast()
+
 const comments = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
@@ -105,9 +107,7 @@ const loadComments = async () => {
       total.value = res.data.pagination.total
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '加载失败')
-    }
+    toast.error(e, '加载失败')
   } finally {
     loading.value = false
   }
@@ -143,9 +143,7 @@ const handleDelete = (comment: any) => {
       }
       loadComments()
     } catch (e: any) {
-      if (import.meta.client) {
-        alert(e.data?.statusMessage || '删除失败')
-      }
+      toast.error(e, '删除失败')
     }
   })()
 }

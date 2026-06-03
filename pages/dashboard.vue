@@ -1,73 +1,66 @@
 <template>
   <div class="dashboard-page">
-    <div class="dashboard-header">
-      <div class="logo">&#128172;</div>
-      <div class="header-right">
-        <span class="user-name">{{ authStore.user?.nickname }}</span>
-        <v-btn size="small" variant="text" @click="handleLogout">退出</v-btn>
-      </div>
-    </div>
+    <v-app-bar elevation="1" density="comfortable">
+      <v-container class="d-flex align-center justify-space-between">
+        <v-avatar size="36" color="primary">
+          <v-icon size="20" icon="mdi-message-text" color="white" />
+        </v-avatar>
+        <div class="d-flex align-center ga-2">
+          <span class="text-body-2 text-medium-emphasis">{{ authStore.user?.nickname }}</span>
+          <v-btn size="small" variant="text" @click="handleLogout">退出</v-btn>
+        </div>
+      </v-container>
+    </v-app-bar>
 
-    <div class="dashboard-content">
-      <v-card class="comments-card" variant="outlined">
-        <template v-slot:title>
-          <span class="card-title">我的评论</span>
-          <span class="total">共 {{ total }} 条</span>
-        </template>
+    <v-main>
+      <v-container style="max-width: 800px">
+        <v-card variant="outlined" rounded="lg" class="mb-5">
+          <template #title>
+            <span class="text-h6">我的评论</span>
+            <span class="text-caption text-medium-emphasis ml-2">共 {{ total }} 条</span>
+          </template>
 
-        <v-card-text>
-          <div v-if="loading" class="loading">
-            <v-progress-circular indeterminate color="primary" size="48" />
-          </div>
+          <v-progress-circular v-if="loading" indeterminate size="40" class="mx-auto my-10" />
 
-          <div v-else-if="comments.length === 0" class="empty">
+          <div v-else-if="comments.length === 0" class="text-center pa-10 text-medium-emphasis">
             暂无评论记录
           </div>
 
-          <div v-else class="comment-list">
-            <div v-for="comment in comments" :key="comment.id" class="comment-item">
-              <div class="comment-header">
-                <span class="app-name">{{ comment.appName }}</span>
-                <span class="chapter">{{ comment.chapterName }}</span>
-                <span class="time">{{ formatTime(comment.createdAt) }}</span>
+          <v-card v-else v-for="comment in comments" :key="comment.id" variant="tonal" class="mb-3">
+            <v-card-text>
+              <div class="d-flex align-center ga-3 mb-2">
+                <v-chip size="small" color="primary">{{ comment.appName }}</v-chip>
+                <span class="text-caption text-medium-emphasis">{{ comment.chapterName }}</span>
+                <v-spacer />
+                <span class="text-caption text-medium-emphasis">{{ formatTime(comment.createdAt) }}</span>
               </div>
-              <p class="comment-content">{{ truncate(comment.content, 150) }}</p>
-            </div>
-          </div>
+              <p class="text-body-2 mb-0">{{ truncate(comment.content, 150) }}</p>
+            </v-card-text>
+          </v-card>
 
-          <div v-if="totalPages > 1" class="pagination">
-            <v-pagination v-model="page" :length="totalPages" @update:model-value="loadComments" density="compact" />
+          <div v-if="totalPages > 1" class="d-flex justify-center pa-4">
+            <v-pagination v-model="page" :length="totalPages" total-visible="5" @update:model-value="loadComments" />
           </div>
-        </v-card-text>
-      </v-card>
+        </v-card>
 
-      <v-card class="quick-card" variant="outlined">
-        <template v-slot:title>
-          <span class="card-title">快捷入口</span>
-        </template>
-        <v-card-text>
-          <v-row>
-            <v-col cols="auto">
+        <v-card variant="outlined" rounded="lg">
+          <template #title>快捷入口</template>
+          <v-card-text>
+            <div class="d-flex ga-3">
               <v-btn @click="navigateTo('/docs')">开发者文档</v-btn>
-            </v-col>
-            <v-col cols="auto" v-if="authStore.isAdmin">
-              <v-btn color="primary" @click="navigateTo('/admin')">
+              <v-btn v-if="authStore.user?.role === 'admin'" color="primary" @click="navigateTo('/admin')">
                 管理后台
               </v-btn>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-container>
+    </v-main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-
-definePageMeta({
-  middleware: 'auth-check',
-})
 
 const authStore = useAuthStore()
 const comments = ref<any[]>([])
@@ -118,97 +111,5 @@ onMounted(() => {
 .dashboard-page {
   min-height: 100vh;
   background: #f5f5f5;
-}
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #f0f0f0;
-}
-.logo {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
-  border-radius: 10px;
-}
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.user-name {
-  color: #333;
-  font-size: 14px;
-}
-.dashboard-content {
-  max-width: 800px;
-  margin: 24px auto;
-  padding: 0 20px;
-}
-.comments-card,
-.quick-card {
-  border-radius: 16px;
-  margin-bottom: 20px;
-}
-.card-title {
-  font-weight: 600;
-}
-.total {
-  color: #999;
-  font-size: 14px;
-  font-weight: normal;
-  margin-left: 12px;
-}
-.loading,
-.empty {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-}
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.comment-item {
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 12px;
-}
-.comment-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.app-name {
-  font-weight: 600;
-  color: #2080f0;
-}
-.chapter {
-  color: #666;
-  font-size: 14px;
-}
-.time {
-  margin-left: auto;
-  color: #999;
-  font-size: 12px;
-}
-.comment-content {
-  margin: 0;
-  color: #333;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
 }
 </style>

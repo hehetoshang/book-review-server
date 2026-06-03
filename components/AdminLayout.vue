@@ -73,7 +73,7 @@ const breadcrumbs = computed(() => {
   const map: Record<string, any[]> = {
     dashboard: [{ title: '仪表盘', disabled: true }],
     apps: [{ title: '应用管理', disabled: true }],
-    'apps/create': [{ title: '应用管理', to: '/admin/apps' }, { title: '创建应用', disabled: true }],
+    'apps/create': [{ title: '应用管理', href: '/admin/apps' }, { title: '创建应用', disabled: true }],
     users: [{ title: '用户管理', disabled: true }],
     comments: [{ title: '评论管理', disabled: true }],
     settings: [{ title: '个人设置', disabled: true }],

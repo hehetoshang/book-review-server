@@ -1,23 +1,25 @@
 import { getPrisma } from '~/server/utils/db'
 
 export default defineEventHandler(async () => {
-  const prisma = getPrisma()
+  try {
+    const prisma = getPrisma()
+    const adminCount = await prisma.user.count({
+      where: { role: 'admin' },
+    })
 
-  // 检查是否有管理员账户
-  const adminCount = await prisma.user.count({
-    where: { role: 'admin' },
-  })
-
-  // 检查是否有应用
-  const appCount = await prisma.app.count()
-
-  const isInstalled = adminCount > 0
-
-  return {
-    err: 'ok',
-    data: {
-      isInstalled,
-      hasApps: appCount > 0,
-    },
+    return {
+      err: 'ok',
+      data: {
+        isInstalled: adminCount > 0,
+      },
+    }
+  } catch {
+    // DB connection failed = not installed yet
+    return {
+      err: 'ok',
+      data: {
+        isInstalled: false,
+      },
+    }
   }
 })

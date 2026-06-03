@@ -108,6 +108,8 @@
 import { ref, onMounted } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
+const toast = useToast()
+
 const route = useRoute()
 const app = ref<any>(null)
 const secret = ref('')
@@ -135,9 +137,7 @@ const loadApp = async () => {
       secret.value = secretRes.data.secret
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '加载失败')
-    }
+    toast.error(e, '加载失败')
   }
 }
 
@@ -155,9 +155,7 @@ const handleUpdate = async () => {
     }
     loadApp()
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '更新失败')
-    }
+    toast.error(e, '更新失败')
   } finally {
     updating.value = false
   }
@@ -178,9 +176,7 @@ const handleResetSecret = async () => {
       }
     }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '重置失败')
-    }
+    toast.error(e, '重置失败')
   } finally {
     resetting.value = false
   }

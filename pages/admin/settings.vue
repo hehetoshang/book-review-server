@@ -65,6 +65,8 @@
 import { ref } from 'vue'
 import AdminLayout from '~/components/AdminLayout.vue'
 
+const toast = useToast()
+
 const authStore = useAuthStore()
 const formRef = ref()
 const formValid = ref(false)
@@ -91,9 +93,7 @@ const handleChangePassword = async () => {
     }
     form.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
   } catch (e: any) {
-    if (import.meta.client) {
-      alert(e.data?.statusMessage || '修改失败')
-    }
+    toast.error(e, '修改失败')
   } finally {
     loading.value = false
   }
