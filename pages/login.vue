@@ -3,54 +3,53 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="logo-section">
-          <div class="logo"></div>
+          <div class="logo">💬</div>
           <h1>评论开放平台</h1>
           <p class="subtitle">登录您的账号</p>
         </div>
 
-        <div class="tabs">
-          <button class="tab" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
-          <button class="tab" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">注册</button>
-        </div>
+        <n-tabs v-model:value="activeTab" type="line" justify-content="space-evenly">
+          <n-tab-pane name="login" tab="登录">
+            <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="top">
+              <n-form-item label="邮箱" path="email">
+                <n-input v-model:value="loginForm.email" type="email" placeholder="your@email.com" size="large" />
+              </n-form-item>
+              <n-form-item label="密码" path="password">
+                <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" size="large" />
+              </n-form-item>
+              <n-button type="primary" block size="large" :loading="loginLoading" attr-type="submit">
+                登录
+              </n-button>
+            </n-form>
+          </n-tab-pane>
 
-        <!-- Login Form -->
-        <form v-if="activeTab === 'login'" class="auth-form" @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label>邮箱</label>
-            <input v-model="loginForm.email" type="email" placeholder="your@email.com" required />
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input v-model="loginForm.password" type="password" placeholder="请输入密码" required />
-          </div>
-          <button type="submit" class="btn primary" :disabled="loginLoading">
-            {{ loginLoading ? '登录中...' : '登录' }}
-          </button>
-        </form>
+          <n-tab-pane name="register" tab="注册">
+            <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-placement="top">
+              <n-form-item label="邮箱" path="email">
+                <n-input v-model:value="registerForm.email" type="email" placeholder="your@email.com" size="large" />
+              </n-form-item>
+              <n-form-item label="昵称" path="nickname">
+                <n-input v-model:value="registerForm.nickname" placeholder="请输入昵称" size="large" />
+              </n-form-item>
+              <n-form-item label="密码" path="password">
+                <n-input v-model:value="registerForm.password" type="password" placeholder="请输入密码（6-50位）" size="large" />
+              </n-form-item>
+              <n-form-item label="确认密码" path="confirmPassword">
+                <n-input v-model:value="registerForm.confirmPassword" type="password" placeholder="请再次输入密码" size="large" />
+              </n-form-item>
+              <n-button type="primary" block size="large" :loading="registerLoading" attr-type="submit">
+                注册
+              </n-button>
+            </n-form>
+          </n-tab-pane>
+        </n-tabs>
 
-        <!-- Register Form -->
-        <form v-else class="auth-form" @submit.prevent="handleRegister">
-          <div class="form-group">
-            <label>邮箱</label>
-            <input v-model="registerForm.email" type="email" placeholder="your@email.com" required />
-          </div>
-          <div class="form-group">
-            <label>昵称</label>
-            <input v-model="registerForm.nickname" type="text" placeholder="请输入昵称" required />
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input v-model="registerForm.password" type="password" placeholder="至少6位密码" required minlength="6" />
-          </div>
-          <button type="submit" class="btn primary" :disabled="registerLoading">
-            {{ registerLoading ? '注册中...' : '注册' }}
-          </button>
-        </form>
-
-        <div v-if="error" class="alert error">{{ error }}</div>
+        <n-alert v-if="error" type="error" class="mt-4">
+          {{ error }}
+        </n-alert>
 
         <div class="footer">
-          <a href="/admin/login" class="admin-link">管理员入口</a>
+          <n-button text @click="navigateTo('/admin/login')">管理员入口</n-button>
         </div>
       </div>
     </div>
@@ -59,18 +58,48 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { NTabs, NTabPane, NForm, NFormItem, NInput, NButton, NAlert, useMessage } from 'naive-ui'
 
 definePageMeta({
   layout: 'blank',
 })
 
+const message = useMessage()
 const activeTab = ref('login')
 const error = ref('')
 const loginLoading = ref(false)
 const registerLoading = ref(false)
 
 const loginForm = ref({ email: '', password: '' })
-const registerForm = ref({ email: '', nickname: '', password: '' })
+const registerForm = ref({ email: '', nickname: '', password: '', confirmPassword: '' })
+
+const loginRules = {
+  email: { required: true, message: '请输入邮箱', trigger: 'blur' },
+  password: { required: true, message: '请输入密码', trigger: 'blur' },
+}
+
+const registerRules = {
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  ],
+  nickname: { required: true, message: '请输入昵称', trigger: 'blur' },
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 50, message: '密码长度需在6-50个字符之间', trigger: 'blur' },
+  ],
+  confirmPassword: {
+    required: true,
+    message: '请再次输入密码',
+    trigger: 'blur',
+    validator: (_rule: any, value: string) => {
+      if (value !== registerForm.value.password) {
+        return new Error('两次输入的密码不一致')
+      }
+      return true
+    },
+  },
+}
 
 const handleLogin = async () => {
   loginLoading.value = true
@@ -84,6 +113,7 @@ const handleLogin = async () => {
       const authStore = useAuthStore()
       authStore.setToken(res.data.token)
       authStore.setUser(res.data.user)
+      message.success('登录成功')
       navigateTo('/dashboard')
     }
   } catch (e: any) {
@@ -106,9 +136,9 @@ const handleRegister = async () => {
       },
     })
     if (res.err === 'ok') {
+      message.success('注册成功，请登录')
       activeTab.value = 'login'
       loginForm.value.email = registerForm.value.email
-      loginForm.value.password = ''
     }
   } catch (e: any) {
     error.value = e.data?.statusMessage || '注册失败'
@@ -116,6 +146,25 @@ const handleRegister = async () => {
     registerLoading.value = false
   }
 }
+
+// Handle form submit
+const handleSubmit = () => {
+  if (activeTab.value === 'login') {
+    handleLogin()
+  } else {
+    handleRegister()
+  }
+}
+
+// Add submit handler to forms
+onMounted(() => {
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      handleSubmit()
+    })
+  })
+})
 </script>
 
 <style scoped>
@@ -129,7 +178,7 @@ const handleRegister = async () => {
 }
 .auth-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
 }
 .auth-card {
   background: white;
@@ -139,130 +188,37 @@ const handleRegister = async () => {
 }
 .logo-section {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 .logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  font-size: 28px;
+  width: 64px;
+  height: 64px;
+  font-size: 32px;
   background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
-  border-radius: 16px;
+  border-radius: 18px;
   margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(32, 128, 240, 0.3);
 }
 .logo-section h1 {
-  font-size: 20px;
+  font-size: 22px;
   color: #1a1a2e;
-  margin: 0 0 4px;
+  margin-bottom: 8px;
   font-weight: 600;
 }
 .subtitle {
-  color: #999;
-  font-size: 13px;
-  margin: 0;
-}
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 24px;
-  background: #f0f0f0;
-  padding: 4px;
-  border-radius: 10px;
-}
-.tab {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: transparent;
   color: #666;
   font-size: 14px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
 }
-.tab.active {
-  background: white;
-  color: #1a1a2e;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.form-group label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-}
-.form-group input {
-  padding: 12px 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #fafafa;
-  color: #1a1a2e;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-.form-group input:focus {
-  outline: none;
-  border-color: #2080f0;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(32, 128, 240, 0.1);
-}
-.form-group input::placeholder {
-  color: #bbb;
-}
-.btn {
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn.primary {
-  background: #2080f0;
-  color: white;
-}
-.btn.primary:hover:not(:disabled) {
-  background: #1660c0;
-}
-.btn.primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-.alert {
+.mt-4 {
   margin-top: 16px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-.alert.error {
-  background: #fef0f0;
-  color: #d03050;
 }
 .footer {
+  text-align: center;
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #f0f0f0;
-  text-align: center;
-}
-.admin-link {
-  color: #999;
-  font-size: 13px;
-  text-decoration: none;
-}
-.admin-link:hover {
-  color: #2080f0;
 }
 </style>
