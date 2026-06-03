@@ -44,6 +44,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { NForm, NFormItem, NInput, NButton, NAlert } from 'naive-ui'
+
 definePageMeta({
   layout: 'blank',
 })

@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/content',
     '@pinia/nuxt',
+    '@bg-dev/nuxt-naiveui',
   ],
 
   css: [
