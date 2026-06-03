@@ -9,7 +9,7 @@
             <p class="subtitle">创建您的账号</p>
           </div>
 
-          <v-form ref="formRef" v-model="formValid" @submit.prevent="handleRegister">
+          <v-form ref="formRef" v-model="formValid">
             <v-text-field
               v-model="form.email"
               label="邮箱"
@@ -45,11 +45,11 @@
               {{ error }}
             </v-alert>
             <v-btn
-              type="submit"
               color="primary"
               block
               size="x-large"
               :loading="loading"
+              @click="handleRegister"
             >
               注册
             </v-btn>

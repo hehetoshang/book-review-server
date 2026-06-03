@@ -15,7 +15,7 @@
             {{ error }}
           </v-alert>
 
-          <v-form @submit.prevent="handleLogin">
+          <v-form>
             <v-text-field
               v-model="form.email"
               label="邮箱"
@@ -34,11 +34,11 @@
               @keyup.enter="handleLogin"
             />
             <v-btn
-              type="submit"
               color="primary"
               block
               size="large"
               :loading="loading"
+              @click="handleLogin"
             >
               登录
             </v-btn>
