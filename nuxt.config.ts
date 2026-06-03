@@ -14,25 +14,41 @@ export default defineNuxtConfig({
   ],
 
   vuetify: {
-    moduleOptions: {},
-    vuetifyOptions: {
-      defaults: {
-        VBtn: {
-          rounded: 'lg',
-          variant: 'flat',
+      moduleOptions: {},
+      vuetifyOptions: {
+        defaults: {
+          VBtn: {
+            rounded: 'xl',
+            variant: 'flat',
+            height: 48,
+          },
+          VCard: {
+            rounded: 'xl',
+            elevation: 2,
+          },
+          VTextField: {
+            variant: 'outlined',
+            density: 'comfortable',
+            rounded: 'lg',
+            hideDetails: 'auto',
+          },
+          VPasswordField: {
+            variant: 'outlined',
+            density: 'comfortable',
+            rounded: 'lg',
+            hideDetails: 'auto',
+          },
+          VSelect: {
+            variant: 'outlined',
+            density: 'comfortable',
+            rounded: 'lg',
+          },
+          VTextarea: {
+            variant: 'outlined',
+            density: 'comfortable',
+            rounded: 'lg',
+          },
         },
-        VCard: {
-          rounded: 'lg',
-        },
-        VTextField: {
-          variant: 'outlined',
-          density: 'comfortable',
-        },
-        VPasswordField: {
-          variant: 'outlined',
-          density: 'comfortable',
-        },
-      },
       theme: {
         defaultTheme: 'light',
         themes: {
