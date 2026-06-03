@@ -1,194 +1,242 @@
 /**
- * Chapter Comments SDK - Lightweight iframe embedding
- *
- * Usage:
- *   const cc = new window.ChapterComments({
- *     appId: 'app_xxx',
- *     chapterId: 123,
- *     token: 'optional-proxy-token',
- *     container: document.getElementById('comments'),
- *     theme: 'light',
- *   })
- *
- * Methods:
- *   cc.setToken(token) - Set user token for authentication
- *   cc.destroy() - Remove iframe and cleanup
- *   cc.getCommentCount() - Get current comment count
+ * ChapterComments SDK
+ * 开箱即用的嵌入式评论组件
+ * 
+ * @version 1.0.0
  */
-;(function (window) {
-  'use strict'
+(function() {
+  'use strict';
 
   /**
-   * @param {Object} options
-   * @param {string} options.appId - Application ID from admin panel
-   * @param {number} options.chapterId - Chapter identifier
-   * @param {string} [options.token] - Optional proxy login token
-   * @param {HTMLElement} [options.container] - Container element (defaults to creating one)
-   * @param {string} [options.theme] - 'light' or 'dark'
-   * @param {string} [options.lang] - Language code, default 'zh-CN'
-   * @param {string} [options.baseUrl] - Server base URL, defaults to current origin
-   * @param {number} [options.bookId] - Optional book ID
-   * @param {string} [options.chapterName] - Optional chapter name
-   * @param {number} [options.segmentId] - Optional segment ID
+   * @typedef {Object} ChapterCommentsConfig
+   * @property {string} baseUrl - 评论服务的基础URL
+   * @property {string} appId - 应用ID
+   * @property {string|HTMLElement} container - 容器选择器或DOM元素
+   * @property {number} [chapterId] - 章节ID
+   * @property {string} [token] - 代理登录token
+   * @property {string} [theme='light'] - 主题 ('light' | 'dark')
+   * @property {string} [lang='zh-CN'] - 语言
+   * @property {boolean} [showPoweredBy=true] - 是否显示"Powered by"
    */
-  function ChapterComments(options) {
-    this.options = Object.assign(
-      {
-        appId: '',
-        chapterId: 0,
-        token: '',
-        container: null,
-        theme: 'light',
-        lang: 'zh-CN',
-        baseUrl: '',
-        bookId: 0,
-        chapterName: '',
-        segmentId: 0,
-      },
-      options || {}
-    )
 
-    this.iframe = null
-    this.commentCount = 0
-    this._messageHandler = null
-    this._destroyed = false
-
-    if (!this.options.appId) {
-      throw new Error('[ChapterComments] appId is required')
-    }
-    if (!this.options.chapterId) {
-      throw new Error('[ChapterComments] chapterId is required')
-    }
-
-    this._init()
-  }
-
-  ChapterComments.prototype = {
-    _init: function () {
-      var self = this
-
-      var params = [
-        'appId=' + encodeURIComponent(this.options.appId),
-        'chapterId=' + this.options.chapterId,
-        'theme=' + encodeURIComponent(this.options.theme),
-        'lang=' + encodeURIComponent(this.options.lang),
-      ]
-
-      if (this.options.token) params.push('token=' + encodeURIComponent(this.options.token))
-      if (this.options.bookId) params.push('bookId=' + this.options.bookId)
-      if (this.options.chapterName) params.push('chapterName=' + encodeURIComponent(this.options.chapterName))
-      if (this.options.segmentId) params.push('segmentId=' + this.options.segmentId)
-
-      var src = (this.options.baseUrl || window.location.origin) + '/embed?' + params.join('&')
-
-      if (!this.options.container) {
-        this.options.container = document.createElement('div')
-        document.body.appendChild(this.options.container)
+  class ChapterComments {
+    /**
+     * @param {ChapterCommentsConfig} config
+     */
+    constructor(config) {
+      if (!config.appId) {
+        throw new Error('appId is required');
+      }
+      if (!config.container) {
+        throw new Error('container is required');
       }
 
-      this.iframe = document.createElement('iframe')
-      this.iframe.src = src
-      this.iframe.style.border = 'none'
-      this.iframe.style.width = '100%'
-      this.iframe.style.minHeight = '200px'
-      this.iframe.setAttribute('scrolling', 'no')
-      this.iframe.setAttribute('frameborder', '0')
-      this.iframe.setAttribute('allow', 'clipboard-write')
+      this.config = {
+        baseUrl: config.baseUrl || window.location.origin,
+        appId: config.appId,
+        container: typeof config.container === 'string' 
+          ? document.querySelector(config.container) 
+          : config.container,
+        chapterId: config.chapterId || 0,
+        token: config.token || '',
+        theme: config.theme || 'light',
+        lang: config.lang || 'zh-CN',
+        showPoweredBy: config.showPoweredBy !== false,
+      };
 
-      this.options.container.innerHTML = ''
-      this.options.container.appendChild(this.iframe)
+      if (!this.config.container) {
+        throw new Error('Container element not found');
+      }
 
-      // Listen for messages from iframe
-      this._messageHandler = function (event) {
-        if (!event.data || event.data.source !== 'chapter-comments') return
+      this.iframe = null;
+      this._init();
+    }
 
-        var type = event.data.type
-        var data = event.data.data
+    _init() {
+      this._createIframe();
+    }
 
-        if (type === 'resize') {
-          self.iframe.style.height = data.height + 'px'
-        } else if (type === 'commentCount') {
-          self.commentCount = data.count
-        } else if (type === 'login') {
-          self._emit('login', data)
+    _createIframe() {
+      const params = new URLSearchParams({
+        appId: this.config.appId,
+        theme: this.config.theme,
+        lang: this.config.lang,
+      });
+
+      if (this.config.chapterId) {
+        params.set('chapterId', String(this.config.chapterId));
+      }
+      if (this.config.token) {
+        params.set('token', this.config.token);
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.src = `${this.config.baseUrl}/embed?${params.toString()}`;
+      iframe.style.width = '100%';
+      iframe.style.border = 'none';
+      iframe.style.overflow = 'hidden';
+      iframe.setAttribute('scrolling', 'no');
+      iframe.setAttribute('allowtransparency', 'true');
+      iframe.setAttribute('title', '评论区');
+      
+      this.config.container.appendChild(iframe);
+      this.iframe = iframe;
+
+      // 监听来自 iframe 的消息
+      this._messageHandler = this._handleMessage.bind(this);
+      window.addEventListener('message', this._messageHandler);
+
+      // 初始高度设置
+      this._setHeight(400);
+    }
+
+    _handleMessage(event) {
+      // 只处理来自 iframe 的消息
+      if (event.source !== this.iframe.contentWindow) return;
+      
+      const data = event.data;
+      if (!data || data.source !== 'chapter-comments') return;
+
+      // 处理 resize 事件
+      if (data.type === 'resize' && data.height) {
+        this._setHeight(data.height);
+      }
+
+      // 处理评论数事件
+      if (data.type === 'commentCount' && typeof data.count === 'number') {
+        this._dispatchEvent('commentCount', { count: data.count });
+      }
+
+      // 处理登录事件
+      if (data.type === 'login' && data.userId) {
+        this._dispatchEvent('login', { userId: data.userId });
+      }
+    }
+
+    _setHeight(height) {
+      if (this.iframe) {
+        this.iframe.style.height = Math.max(height, 200) + 'px';
+      }
+    }
+
+    /**
+     * 更新代理登录token
+     * 当宿主应用切换用户时调用此方法
+     * @param {string} token - 新的代理登录token
+     */
+    setToken(token) {
+      this.config.token = token;
+      if (this.iframe && this.iframe.contentWindow) {
+        this.iframe.contentWindow.postMessage(
+          { source: 'parent-sdk', action: 'setToken', token },
+          '*'
+        );
+      }
+    }
+
+    /**
+     * 更新章节ID
+     * @param {number} chapterId - 新的章节ID
+     */
+    setChapterId(chapterId) {
+      this.config.chapterId = chapterId;
+      this._reload();
+    }
+
+    /**
+     * 重新加载评论区
+     */
+    _reload() {
+      if (this.iframe && this.config.container) {
+        this.config.container.removeChild(this.iframe);
+        this._createIframe();
+      }
+    }
+
+    /**
+     * 获取评论数
+     * @returns {Promise<number>}
+     */
+    getCommentCount() {
+      return new Promise((resolve, reject) => {
+        let resolved = false;
+        
+        const handler = (e) => {
+          if (e.source !== this.iframe.contentWindow) return;
+          if (!e.data || e.data.source !== 'chapter-comments') return;
+          
+          if (e.data.type === 'commentCount' && typeof e.data.count === 'number') {
+            resolved = true;
+            window.removeEventListener('message', handler);
+            clearTimeout(timeout);
+            resolve(e.data.count);
+          }
+        };
+
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            window.removeEventListener('message', handler);
+            resolve(0);
+          }
+        }, 3000);
+
+        window.addEventListener('message', handler);
+        
+        if (this.iframe && this.iframe.contentWindow) {
+          this.iframe.contentWindow.postMessage(
+            { source: 'parent-sdk', action: 'getCommentCount' },
+            '*'
+          );
         }
-      }
-
-      window.addEventListener('message', this._messageHandler)
-    },
+      });
+    }
 
     /**
-     * Set authentication token after creation
-     * @param {string} token
-     */
-    setToken: function (token) {
-      if (this._destroyed || !this.iframe) return
-      this.iframe.contentWindow.postMessage(
-        { source: 'parent-sdk', type: 'setToken', data: { token: token } },
-        '*'
-      )
-    },
-
-    /**
-     * Get current comment count
-     * @returns {number}
-     */
-    getCommentCount: function () {
-      return this.commentCount
-    },
-
-    /**
-     * Emit custom events
+     * 派发自定义事件到容器元素
+     * @param {string} type - 事件类型
+     * @param {Object} detail - 事件详情
      * @private
      */
-    _emit: function (type, data) {
-      if (this.options.on && typeof this.options.on === 'function') {
-        this.options.on(type, data)
-      }
-      // Also dispatch CustomEvent on container
-      if (this.options.container) {
-        this.options.container.dispatchEvent(
-          new CustomEvent('cc:' + type, { detail: data })
-        )
-      }
-    },
+    _dispatchEvent(type, detail) {
+      const event = new CustomEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        detail: detail,
+      });
+      this.config.container.dispatchEvent(event);
+    }
 
     /**
-     * Destroy iframe and cleanup
+     * 销毁组件
      */
-    destroy: function () {
-      if (this._destroyed) return
-      this._destroyed = true
-
+    destroy() {
       if (this._messageHandler) {
-        window.removeEventListener('message', this._messageHandler)
+        window.removeEventListener('message', this._messageHandler);
       }
-      if (this.iframe && this.iframe.parentNode) {
-        this.iframe.parentNode.removeChild(this.iframe)
+      if (this.iframe && this.config.container) {
+        this.config.container.removeChild(this.iframe);
+        this.iframe = null;
       }
-      this.iframe = null
-    },
+    }
+
+    /**
+     * 获取组件版本
+     * @returns {string}
+     */
+    static getVersion() {
+      return '1.0.0';
+    }
   }
 
-  // Expose globally
-  window.ChapterComments = ChapterComments
+  // 导出到全局
+  if (typeof window !== 'undefined') {
+    window.ChapterComments = ChapterComments;
+  }
 
-  // Auto-init via data attributes
-  document.addEventListener('DOMContentLoaded', function () {
-    var els = document.querySelectorAll('[data-cc-app-id]')
-    for (var i = 0; i < els.length; i++) {
-      var el = els[i]
-      new ChapterComments({
-        appId: el.getAttribute('data-cc-app-id') || '',
-        chapterId: parseInt(el.getAttribute('data-cc-chapter-id') || '0', 10),
-        token: el.getAttribute('data-cc-token') || '',
-        container: el,
-        theme: el.getAttribute('data-cc-theme') || 'light',
-        lang: el.getAttribute('data-cc-lang') || 'zh-CN',
-        bookId: parseInt(el.getAttribute('data-cc-book-id') || '0', 10),
-        chapterName: el.getAttribute('data-cc-chapter-name') || '',
-        segmentId: parseInt(el.getAttribute('data-cc-segment-id') || '0', 10),
-      })
-    }
-  })
-})(typeof window !== 'undefined' ? window : this)
+  // 支持 AMD / CommonJS
+  if (typeof define === 'function' && define.amd) {
+    define(function() { return ChapterComments; });
+  } else if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ChapterComments;
+  }
+})();
