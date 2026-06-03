@@ -62,7 +62,7 @@ import { NButton } from 'naive-ui'
 <style scoped>
 .home-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0ff 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
   padding: 80px 24px 120px;
 }
 .hero {
