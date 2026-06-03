@@ -8,7 +8,7 @@
           <p class="subtitle">登录您的账号</p>
         </div>
         
-        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
+        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleLogin">
           <n-form-item label="邮箱" path="email">
             <n-input 
               v-model:value="form.email" 
@@ -23,9 +23,10 @@
               type="password"
               placeholder="请输入密码"
               size="large"
+              @keyup.enter="handleLogin"
             />
           </n-form-item>
-          <n-button type="primary" block size="large" :loading="loading" attr-type="submit">
+          <n-button type="primary" block size="large" :loading="loading" @click="handleLogin">
             登录
           </n-button>
         </n-form>

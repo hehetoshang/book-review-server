@@ -10,21 +10,21 @@
 
         <n-tabs v-model:value="activeTab" type="line" justify-content="space-evenly">
           <n-tab-pane name="login" tab="登录">
-            <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="top">
+            <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="top" @submit.prevent="handleLogin">
               <n-form-item label="邮箱" path="email">
                 <n-input v-model:value="loginForm.email" type="email" placeholder="your@email.com" size="large" />
               </n-form-item>
               <n-form-item label="密码" path="password">
-                <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" size="large" />
+                <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" size="large" @keyup.enter="handleLogin" />
               </n-form-item>
-              <n-button type="primary" block size="large" :loading="loginLoading" attr-type="submit">
+              <n-button type="primary" block size="large" :loading="loginLoading" @click="handleLogin">
                 登录
               </n-button>
             </n-form>
           </n-tab-pane>
 
           <n-tab-pane name="register" tab="注册">
-            <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-placement="top">
+            <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-placement="top" @submit.prevent="handleRegister">
               <n-form-item label="邮箱" path="email">
                 <n-input v-model:value="registerForm.email" type="email" placeholder="your@email.com" size="large" />
               </n-form-item>
@@ -35,9 +35,9 @@
                 <n-input v-model:value="registerForm.password" type="password" placeholder="请输入密码（6-50位）" size="large" />
               </n-form-item>
               <n-form-item label="确认密码" path="confirmPassword">
-                <n-input v-model:value="registerForm.confirmPassword" type="password" placeholder="请再次输入密码" size="large" />
+                <n-input v-model:value="registerForm.confirmPassword" type="password" placeholder="请再次输入密码" size="large" @keyup.enter="handleRegister" />
               </n-form-item>
-              <n-button type="primary" block size="large" :loading="registerLoading" attr-type="submit">
+              <n-button type="primary" block size="large" :loading="registerLoading" @click="handleRegister">
                 注册
               </n-button>
             </n-form>
@@ -147,24 +147,6 @@ const handleRegister = async () => {
   }
 }
 
-// Handle form submit
-const handleSubmit = () => {
-  if (activeTab.value === 'login') {
-    handleLogin()
-  } else {
-    handleRegister()
-  }
-}
-
-// Add submit handler to forms
-onMounted(() => {
-  document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', (e) => {
-      e.preventDefault()
-      handleSubmit()
-    })
-  })
-})
 </script>
 
 <style scoped>
