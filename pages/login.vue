@@ -17,12 +17,12 @@
 
           <v-form>
             <v-text-field
-              v-model="form.email"
-              label="邮箱"
-              type="email"
-              placeholder="your@email.com"
-              prepend-inner-icon="mdi-email"
+              v-model="form.account"
+              label="邮箱或用户名"
+              placeholder="your@email.com 或用户名"
+              prepend-inner-icon="mdi-account"
               required
+              @keyup.enter="handleLogin"
             />
             <v-text-field
               v-model="form.password"
@@ -65,7 +65,7 @@ definePageMeta({
   layout: 'blank',
 })
 
-const form = ref({ email: '', password: '' })
+const form = ref({ account: '', password: '' })
 const loading = ref(false)
 const error = ref('')
 
@@ -75,7 +75,7 @@ const handleLogin = async () => {
   try {
     const res: any = await $fetch('/api/auth/login', {
       method: 'POST',
-      body: form.value,
+      body: { account: form.value.account, password: form.value.password },
     })
     if (res.data?.token) {
       const authStore = useAuthStore()

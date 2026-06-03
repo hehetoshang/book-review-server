@@ -66,6 +66,7 @@
           <!-- Step 2: Admin Setup -->
           <div v-if="step === 2" class="step-panel">
             <v-form ref="adminFormRef" v-model="adminFormValid">
+              <v-text-field v-model="admin.username" label="管理员用户名" placeholder="admin" variant="outlined" :rules="usernameRules" />
               <v-text-field v-model="admin.email" label="管理员邮箱" type="email" placeholder="admin@example.com" variant="outlined" :rules="[v => !!v || '必填', v => /.+@.+\..+/.test(v) || '格式错误']" />
               <v-text-field v-model="admin.nickname" label="管理员昵称" placeholder="管理员" variant="outlined" :rules="[v => !!v || '必填']" />
               <v-text-field v-model="admin.password" label="管理员密码" type="password" placeholder="至少6位密码" variant="outlined" :rules="[v => !!v || '必填', v => v.length >= 6 || '至少6位']" />
@@ -122,10 +123,15 @@ const successMsg = ref('')
 const appId = ref('')
 
 const db = ref({ host: 'localhost', port: 3306, user: 'root', password: '', database: 'chapter_comments' })
-const admin = ref({ email: '', nickname: '', password: '', confirmPassword: '', siteName: '评论开放平台' })
+const admin = ref({ username: '', email: '', nickname: '', password: '', confirmPassword: '', siteName: '评论开放平台' })
 
 const dbFormRef = ref()
 const adminFormRef = ref()
+
+const usernameRules = [
+  (v: string) => !!v || '请输入用户名',
+  (v: string) => /^[a-zA-Z0-9_]{2,20}$/.test(v) || '用户名只能包含字母、数字和下划线，长度2-20位',
+]
 
 const canProceed = computed(() => {
   if (step.value === 1) return dbConnected.value

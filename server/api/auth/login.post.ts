@@ -4,22 +4,30 @@ import { signToken } from '~/server/utils/jwt'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { email, password } = body
+  const { account, password } = body
 
-  if (!email || !password) {
-    throw createError({ statusCode: 400, statusMessage: '邮箱和密码不能为空' })
+  if (!account || !password) {
+    throw createError({ statusCode: 400, statusMessage: '账号和密码不能为空' })
   }
 
   const prisma = getPrisma()
 
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } })
+  let user = null
+  // Check if account is email format
+  if (account.includes('@')) {
+    user = await prisma.user.findUnique({ where: { email: account.trim().toLowerCase() } })
+  } else {
+    // Try to find by username
+    user = await prisma.user.findUnique({ where: { username: account.trim().toLowerCase() } })
+  }
+  
   if (!user) {
-    throw createError({ statusCode: 401, statusMessage: '邮箱或密码错误' })
+    throw createError({ statusCode: 401, statusMessage: '账号或密码错误' })
   }
 
   const validPassword = await bcrypt.compare(password, user.password)
   if (!validPassword) {
-    throw createError({ statusCode: 401, statusMessage: '邮箱或密码错误' })
+    throw createError({ statusCode: 401, statusMessage: '账号或密码错误' })
   }
 
   if (!user.isActive) {
@@ -53,6 +61,7 @@ export default defineEventHandler(async (event) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         nickname: user.nickname,
         role: user.role,
         avatar: user.avatar,

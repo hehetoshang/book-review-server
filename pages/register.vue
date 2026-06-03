@@ -11,6 +11,13 @@
 
           <v-form ref="formRef" v-model="formValid">
             <v-text-field
+              v-model="form.username"
+              label="用户名"
+              placeholder="请输入用户名（字母数字下划线）"
+              variant="outlined"
+              :rules="usernameRules"
+            />
+            <v-text-field
               v-model="form.email"
               label="邮箱"
               type="email"
@@ -73,10 +80,14 @@ definePageMeta({
 
 const formRef = ref()
 const formValid = ref(false)
-const form = ref({ email: '', nickname: '', password: '', confirmPassword: '' })
+const form = ref({ username: '', email: '', nickname: '', password: '', confirmPassword: '' })
 const loading = ref(false)
 const error = ref('')
 
+const usernameRules = [
+  (v: string) => !!v || '请输入用户名',
+  (v: string) => /^[a-zA-Z0-9_]{2,20}$/.test(v) || '用户名只能包含字母、数字和下划线，长度2-20位',
+]
 const emailRules = [
   (v: string) => !!v || '请输入邮箱',
   (v: string) => /.+@.+\..+/.test(v) || '请输入正确的邮箱格式',
@@ -96,6 +107,7 @@ const handleRegister = async () => {
     const res: any = await $fetch('/api/auth/register', {
       method: 'POST',
       body: {
+        username: form.value.username,
         email: form.value.email,
         nickname: form.value.nickname,
         password: form.value.password,

@@ -15,10 +15,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { email, password, nickname, siteName } = body
+  const { username, email, password, nickname, siteName } = body
 
-  if (!email || !password || !nickname) {
+  if (!username || !email || !password || !nickname) {
     throw createError({ statusCode: 400, statusMessage: '请填写完整信息' })
+  }
+
+  const usernameRegex = /^[a-zA-Z0-9_]{2,20}$/
+  if (!usernameRegex.test(username.trim())) {
+    throw createError({ statusCode: 400, statusMessage: '用户名只能包含字母、数字和下划线，长度2-20位' })
   }
 
   if (password.length < 6 || password.length > 50) {
@@ -29,6 +34,7 @@ export default defineEventHandler(async (event) => {
   const hashedPassword = await bcrypt.hash(password, 10)
   const admin = await prisma.user.create({
     data: {
+      username: username.trim().toLowerCase(),
       email: email.trim().toLowerCase(),
       nickname,
       password: hashedPassword,

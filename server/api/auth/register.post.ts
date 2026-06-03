@@ -4,7 +4,7 @@ import { sanitizeHtml } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { email, password, nickname } = body
+  const { username, email, nickname, password } = body
 
   if (!email || !password) {
     throw createError({ statusCode: 400, statusMessage: '邮箱和密码不能为空' })
@@ -26,10 +26,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: '该邮箱已被注册' })
   }
 
+  if (username) {
+    const usernameRegex = /^[a-zA-Z0-9_]{2,20}$/
+    if (!usernameRegex.test(username.trim())) {
+      throw createError({ statusCode: 400, statusMessage: '用户名只能包含字母、数字和下划线，长度2-20位' })
+    }
+    const existingUsername = await prisma.user.findUnique({ where: { username: username.trim().toLowerCase() } })
+    if (existingUsername) {
+      throw createError({ statusCode: 409, statusMessage: '该用户名已被注册' })
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10)
 
   const user = await prisma.user.create({
     data: {
+      username: username ? username.trim().toLowerCase() : email.trim().toLowerCase().split('@')[0],
       email: email.trim().toLowerCase(),
       nickname: sanitizeHtml(nickname || email.split('@')[0]).slice(0, 50),
       password: hashedPassword,
@@ -42,6 +54,7 @@ export default defineEventHandler(async (event) => {
     err: 'ok',
     data: {
       id: user.id,
+      username: user.username,
       email: user.email,
       nickname: user.nickname,
     },

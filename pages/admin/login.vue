@@ -15,14 +15,14 @@
             {{ error }}
           </v-alert>
 
-          <v-form @submit.prevent="handleLogin">
+          <v-form>
             <v-text-field
-              v-model="form.email"
-              label="邮箱"
-              type="email"
-              placeholder="your@email.com"
-              prepend-inner-icon="mdi-email"
+              v-model="form.account"
+              label="邮箱或用户名"
+              placeholder="your@email.com 或用户名"
+              prepend-inner-icon="mdi-account"
               required
+              @keyup.enter="handleLogin"
             />
             <v-text-field
               v-model="form.password"
@@ -34,21 +34,19 @@
               @keyup.enter="handleLogin"
             />
             <v-btn
-              type="submit"
               color="primary"
               block
               size="large"
               :loading="loading"
+              @click="handleLogin"
             >
               登录
             </v-btn>
           </v-form>
         </v-card-text>
 
-        <v-divider />
-
         <v-card-actions class="justify-center">
-          <p class="text-body-2 text-medium-emphasis">管理员账号：admin@example.com / admin123</p>
+          <p class="text-body-2 text-medium-emphasis">首次访问？<a href="/install" class="text-primary text-decoration-none">前往安装向导</a></p>
         </v-card-actions>
       </v-card>
     </div>
@@ -61,7 +59,7 @@ definePageMeta({
 })
 
 const { setToken, setUser } = useAuthStore()
-const form = ref({ email: '', password: '' })
+const form = ref({ account: '', password: '' })
 const loading = ref(false)
 const error = ref('')
 
@@ -71,7 +69,7 @@ const handleLogin = async () => {
   try {
     const res: any = await $fetch('/api/auth/login', {
       method: 'POST',
-      body: { email: form.value.email, password: form.value.password },
+      body: { account: form.value.account, password: form.value.password },
     })
     if (res.data?.token) {
       setToken(res.data.token)
