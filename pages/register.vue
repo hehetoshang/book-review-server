@@ -1,29 +1,34 @@
 <template>
-  <div class="login-page">
-    <div class="login-container">
-      <div class="login-card">
+  <div class="register-page">
+    <div class="register-container">
+      <div class="register-card">
         <div class="logo-section">
           <div class="logo">💬</div>
           <h1>评论开放平台</h1>
-          <p class="subtitle">登录您的账号</p>
+          <p class="subtitle">创建您的账号</p>
         </div>
 
-        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleLogin">
+        <n-form ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleRegister">
           <n-form-item label="邮箱" path="email">
             <n-input v-model:value="form.email" type="email" placeholder="your@email.com" size="large" />
           </n-form-item>
+          <n-form-item label="昵称" path="nickname">
+            <n-input v-model:value="form.nickname" placeholder="请输入昵称" size="large" />
+          </n-form-item>
           <n-form-item label="密码" path="password">
-            <n-input v-model:value="form.password" type="password" placeholder="请输入密码" size="large" @keyup.enter="handleLogin" />
+            <n-input v-model:value="form.password" type="password" placeholder="至少6位密码" size="large" />
+          </n-form-item>
+          <n-form-item label="确认密码" path="confirmPassword">
+            <n-input v-model:value="form.confirmPassword" type="password" placeholder="请再次输入密码" size="large" />
           </n-form-item>
           <div v-if="error" class="error-msg">{{ error }}</div>
-          <n-button type="primary" block size="large" :loading="loading" @click="handleLogin">
-            登录
+          <n-button type="primary" block size="large" :loading="loading" @click="handleRegister">
+            注册
           </n-button>
         </n-form>
 
         <div class="footer">
-          <p>还没有账号？<a href="/register">立即注册</a></p>
-          <p class="admin-link"><a href="/admin/login">管理员入口</a></p>
+          <p>已有账号？<a href="/login">立即登录</a></p>
         </div>
       </div>
     </div>
@@ -39,31 +44,50 @@ definePageMeta({
 })
 
 const formRef = ref()
-const form = ref({ email: '', password: '' })
+const form = ref({ email: '', nickname: '', password: '', confirmPassword: '' })
 const loading = ref(false)
 const error = ref('')
 
 const rules = {
-  email: { required: true, message: '请输入邮箱', trigger: 'blur' },
-  password: { required: true, message: '请输入密码', trigger: 'blur' },
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  ],
+  nickname: { required: true, message: '请输入昵称', trigger: 'blur' },
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 50, message: '密码长度需在6-50个字符之间', trigger: 'blur' },
+  ],
+  confirmPassword: {
+    required: true,
+    message: '请再次输入密码',
+    trigger: 'blur',
+    validator: (_rule: any, value: string) => {
+      if (value !== form.value.password) {
+        return new Error('两次输入的密码不一致')
+      }
+      return true
+    },
+  },
 }
 
-const handleLogin = async () => {
+const handleRegister = async () => {
   loading.value = true
   error.value = ''
   try {
-    const res: any = await $fetch('/api/auth/login', {
+    const res: any = await $fetch('/api/auth/register', {
       method: 'POST',
-      body: form.value,
+      body: {
+        email: form.value.email,
+        nickname: form.value.nickname,
+        password: form.value.password,
+      },
     })
-    if (res.data?.token) {
-      const authStore = useAuthStore()
-      authStore.setToken(res.data.token)
-      authStore.setUser(res.data.user)
-      navigateTo('/dashboard')
+    if (res.err === 'ok') {
+      navigateTo('/login?registered=1')
     }
   } catch (e: any) {
-    error.value = e.data?.statusMessage || '登录失败'
+    error.value = e.data?.statusMessage || '注册失败'
   } finally {
     loading.value = false
   }
@@ -71,7 +95,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-page {
+.register-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -79,11 +103,11 @@ const handleLogin = async () => {
   background: #f5f5f5;
   padding: 20px;
 }
-.login-container {
+.register-container {
   width: 100%;
   max-width: 400px;
 }
-.login-card {
+.register-card {
   background: white;
   border-radius: 20px;
   padding: 40px;
@@ -130,7 +154,7 @@ const handleLogin = async () => {
   border-top: 1px solid #f0f0f0;
 }
 .footer p {
-  margin: 8px 0;
+  margin: 0;
   font-size: 14px;
   color: #666;
 }
@@ -140,10 +164,5 @@ const handleLogin = async () => {
 }
 .footer a:hover {
   text-decoration: underline;
-}
-.admin-link {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
 }
 </style>
