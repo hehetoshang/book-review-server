@@ -5,6 +5,7 @@ declare module 'h3' {
     user: {
       id: number
       email: string
+      username: string
       nickname: string
       role: string
       avatar: string | null
@@ -15,6 +16,7 @@ declare module 'h3' {
 export interface User {
   id: number
   email: string
+  username: string
   nickname: string
   role: string
   avatar: string | null
