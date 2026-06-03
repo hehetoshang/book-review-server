@@ -36,7 +36,7 @@
               <div class="header-right">
                 <NSpace>
                   <span class="user-info">{{ authStore.user?.nickname }}</span>
-                  <NButton size="small" ghost @click="handleLogout">退出</NButton>
+                  <NButton size="small" @click="handleLogout">退出</NButton>
                 </NSpace>
               </div>
             </NLayoutHeader>
@@ -76,38 +76,21 @@ const themeOverrides = {
   common: {
     primaryColor: '#2080f0',
     primaryColorHover: '#1660c0',
+    borderRadius: '10px',
+  },
+  Card: {
+    borderRadius: '16px',
   },
   Menu: {
-    itemTextColor: '#666',
-    itemTextColorHover: '#2080f0',
-    itemTextColorActive: '#2080f0',
-    itemBgColorHover: '#f0f5ff',
-    itemBgColorActive: '#e8f0ff',
-    itemBorderRadius: '8px',
+    itemBorderRadius: '10px',
   },
 }
 
 const menuOptions: MenuOption[] = [
-  {
-    label: '仪表盘',
-    key: 'dashboard',
-    icon: '📊',
-  },
-  {
-    label: '应用管理',
-    key: 'apps',
-    icon: '📱',
-  },
-  {
-    label: '评论管理',
-    key: 'comments',
-    icon: '💬',
-  },
-  {
-    label: '个人设置',
-    key: 'settings',
-    icon: '⚙️',
-  },
+  { label: '仪表盘', key: 'dashboard' },
+  { label: '应用管理', key: 'apps' },
+  { label: '评论管理', key: 'comments' },
+  { label: '个人设置', key: 'settings' },
 ]
 
 const route = useRoute()
@@ -156,7 +139,6 @@ const handleLogout = () => {
 }
 .sider {
   background: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
 .logo-wrapper {
   display: flex;
@@ -187,7 +169,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
   background: #fff;
 }
 .header-left {
@@ -199,6 +181,6 @@ const handleLogout = () => {
 }
 .admin-content {
   padding: 24px;
-  background: #f5f7fa;
+  background: #f5f5f5;
 }
 </style>

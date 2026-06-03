@@ -7,77 +7,72 @@
       </div>
       
       <div class="stats-grid">
-        <n-card class="stat-card apps-card">
-          <div class="stat-icon">📱</div>
-          <div class="stat-content">
-            <n-statistic :value="stats.appCount || 0" suffix="个">
-              <template #prefix>应用数</template>
-            </n-statistic>
+        <n-card class="stat-card">
+          <div class="stat-inner">
+            <div class="stat-icon blue">📱</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.appCount || 0 }}</div>
+              <div class="stat-label">应用数</div>
+            </div>
           </div>
         </n-card>
         
-        <n-card class="stat-card comments-card">
-          <div class="stat-icon">💬</div>
-          <div class="stat-content">
-            <n-statistic :value="stats.commentCount || 0" suffix="条">
-              <template #prefix>评论数</template>
-            </n-statistic>
+        <n-card class="stat-card">
+          <div class="stat-inner">
+            <div class="stat-icon orange">💬</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.commentCount || 0 }}</div>
+              <div class="stat-label">评论数</div>
+            </div>
           </div>
         </n-card>
         
-        <n-card class="stat-card today-card">
-          <div class="stat-icon">📈</div>
-          <div class="stat-content">
-            <n-statistic :value="stats.todayComments || 0" suffix="条">
-              <template #prefix>今日新增</template>
-            </n-statistic>
+        <n-card class="stat-card">
+          <div class="stat-inner">
+            <div class="stat-icon green">📈</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.todayComments || 0 }}</div>
+              <div class="stat-label">今日新增</div>
+            </div>
           </div>
         </n-card>
         
-        <n-card class="stat-card users-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-content">
-            <n-statistic :value="stats.userCount || 0" suffix="人">
-              <template #prefix>用户数</template>
-            </n-statistic>
+        <n-card class="stat-card">
+          <div class="stat-inner">
+            <div class="stat-icon purple">👥</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.userCount || 0 }}</div>
+              <div class="stat-label">用户数</div>
+            </div>
           </div>
         </n-card>
       </div>
       
-      <div class="quick-actions">
+      <div class="content-grid">
         <n-card title="快捷操作" class="action-card">
-          <n-space wrap>
+          <n-space>
             <n-button type="primary" @click="navigateTo('/admin/apps')">
-              <template #icon>📱</template>
               管理应用
             </n-button>
             <n-button @click="navigateTo('/admin/comments')">
-              <template #icon>💬</template>
               管理评论
-            </n-button>
-            <n-button @click="navigateTo('/admin/apps/create')">
-              <template #icon>➕</template>
-              创建应用
             </n-button>
           </n-space>
         </n-card>
-      </div>
-      
-      <div class="recent-section">
+        
         <n-card title="最近评论" class="recent-card">
-          <div v-if="recentComments.length === 0" class="empty-state">
-            <p>暂无评论</p>
+          <div v-if="recentComments.length === 0" class="empty">
+            暂无评论
           </div>
-          <n-space vertical v-else>
+          <div v-else class="comment-list">
             <div v-for="comment in recentComments" :key="comment.id" class="comment-item">
-              <div class="comment-header">
+              <div class="comment-top">
                 <span class="nickname">{{ comment.nickname }}</span>
-                <span class="app-name">{{ comment.appName }}</span>
                 <span class="time">{{ formatTime(comment.createdAt) }}</span>
               </div>
-              <p class="comment-content">{{ truncate(comment.content, 100) }}</p>
+              <p class="comment-text">{{ truncate(comment.content, 80) }}</p>
             </div>
-          </n-space>
+          </div>
         </n-card>
       </div>
     </div>
@@ -86,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NCard, NStatistic, NSpace, NButton } from 'naive-ui'
+import { NCard, NSpace, NButton } from 'naive-ui'
 import AdminLayout from '~/components/AdminLayout.vue'
 
 const authStore = useAuthStore()
@@ -151,106 +146,120 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: #1a1a2e;
-  margin-bottom: 4px;
+  margin: 0 0 4px;
 }
 .page-subtitle {
   color: #666;
   font-size: 14px;
+  margin: 0;
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 24px;
 }
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .stat-card {
+  border-radius: 16px;
+}
+.stat-inner {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px;
-  border-radius: 16px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.stat-card:hover {
-  transform: translateY(-2px);
 }
 .stat-icon {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   border-radius: 14px;
 }
-.apps-card .stat-icon {
-  background: linear-gradient(135deg, #e8f4fd 0%, #d4eafd 100%);
+.stat-icon.blue {
+  background: #e6f4ff;
 }
-.comments-card .stat-icon {
-  background: linear-gradient(135deg, #fef3e2 0%, #fde6d0 100%);
+.stat-icon.orange {
+  background: #fff7e6;
 }
-.today-card .stat-icon {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+.stat-icon.green {
+  background: #e6fffb;
 }
-.users-card .stat-icon {
-  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+.stat-icon.purple {
+  background: #f9f0ff;
 }
-.stat-content {
-  flex: 1;
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
 }
-.quick-actions {
-  margin-bottom: 24px;
+.stat-label {
+  font-size: 14px;
+  color: #999;
 }
-.action-card {
-  border-radius: 16px;
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
 }
-.recent-section {
-  margin-bottom: 24px;
+@media (max-width: 768px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
 }
+.action-card,
 .recent-card {
   border-radius: 16px;
 }
-.empty-state {
+.empty {
   text-align: center;
-  padding: 40px;
+  padding: 32px;
   color: #999;
 }
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 .comment-item {
-  padding: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
 }
 .comment-item:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
-.comment-header {
+.comment-top {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 .nickname {
   font-weight: 600;
   color: #333;
 }
-.app-name {
-  padding: 2px 8px;
-  background: #f0f5ff;
-  color: #2080f0;
-  border-radius: 4px;
-  font-size: 12px;
-}
 .time {
-  margin-left: auto;
-  color: #999;
   font-size: 12px;
+  color: #999;
 }
-.comment-content {
-  color: #666;
-  font-size: 14px;
+.comment-text {
   margin: 0;
+  font-size: 14px;
+  color: #666;
   line-height: 1.5;
 }
 </style>

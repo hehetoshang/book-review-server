@@ -1,9 +1,11 @@
 <template>
   <AdminLayout>
     <div class="settings-page">
-      <n-h2>个人设置</n-h2>
+      <div class="page-header">
+        <h1 class="page-title">个人设置</h1>
+      </div>
 
-      <n-card class="mb-4" title="账户信息">
+      <n-card title="账户信息" class="info-card">
         <n-descriptions :column="1">
           <n-descriptions-item label="邮箱">
             {{ authStore.user?.email }}
@@ -14,7 +16,7 @@
         </n-descriptions>
       </n-card>
 
-      <n-card title="修改密码">
+      <n-card title="修改密码" class="password-card">
         <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
           <n-form-item label="当前密码" path="currentPassword">
             <n-input v-model:value="form.currentPassword" type="password" placeholder="请输入当前密码" />
@@ -37,7 +39,9 @@
 </template>
 
 <script setup lang="ts">
-import { NCard, NH2, NForm, NFormItem, NInput, NButton, NDescriptions, NDescriptionsItem, useMessage } from 'naive-ui'
+import { ref } from 'vue'
+import { NCard, NForm, NFormItem, NInput, NButton, NDescriptions, NDescriptionsItem, useMessage } from 'naive-ui'
+import AdminLayout from '~/components/AdminLayout.vue'
 
 const authStore = useAuthStore()
 const message = useMessage()
@@ -63,7 +67,7 @@ const rules = {
 const handleChangePassword = async () => {
   loading.value = true
   try {
-    const { token } = useAuthStore()
+    const { token } = authStore
     await $fetch('/api/auth/password', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token.value}` },
@@ -83,7 +87,18 @@ const handleChangePassword = async () => {
 </script>
 
 <style scoped>
-.mb-4 {
-  margin-bottom: 16px;
+.page-header {
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+.info-card,
+.password-card {
+  border-radius: 16px;
+  margin-bottom: 20px;
 }
 </style>

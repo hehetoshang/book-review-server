@@ -1,9 +1,7 @@
 <template>
   <div class="home-page">
     <div class="hero">
-      <div class="logo-wrapper">
-        <div class="logo">💬</div>
-      </div>
+      <div class="logo">💬</div>
       <h1>评论开放平台</h1>
       <p class="subtitle">全栈、可嵌入的第三方评论服务</p>
       <div class="actions">
@@ -18,22 +16,22 @@
     
     <div class="features">
       <div class="feature-card">
-        <div class="icon-wrapper">🔐</div>
+        <div class="icon blue">🔐</div>
         <h3>安全认证</h3>
         <p>bcrypt 密码哈希 + JWT 令牌，支持第三方代理登录</p>
       </div>
       <div class="feature-card">
-        <div class="icon-wrapper">📱</div>
+        <div class="icon green">📱</div>
         <h3>多租户隔离</h3>
         <p>每个应用独立的评论空间，支持自定义域名限制</p>
       </div>
       <div class="feature-card">
-        <div class="icon-wrapper">💬</div>
+        <div class="icon orange">💬</div>
         <h3>嵌入评论</h3>
         <p>iframe 嵌入 + JS SDK，支持 Vue/Flutter/React Native</p>
       </div>
       <div class="feature-card">
-        <div class="icon-wrapper">📊</div>
+        <div class="icon purple">📊</div>
         <h3>管理后台</h3>
         <p>Naive UI 构建，应用管理、评论审核、统计仪表盘</p>
       </div>
@@ -62,112 +60,115 @@ import { NButton } from 'naive-ui'
 <style scoped>
 .home-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: #fff;
   padding: 80px 24px 120px;
 }
 .hero {
   text-align: center;
   margin-bottom: 80px;
 }
-.logo-wrapper {
-  margin-bottom: 24px;
-}
 .logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100px;
-  height: 100px;
-  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  font-size: 40px;
   background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(32, 128, 240, 0.3);
+  border-radius: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(32, 128, 240, 0.2);
 }
 .hero h1 {
-  font-size: 48px;
+  font-size: 36px;
   font-weight: 700;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1a1a2e;
+  margin-bottom: 12px;
 }
 .subtitle {
-  font-size: 20px;
+  font-size: 18px;
   color: #666;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 .actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
 }
 .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
   margin: 0 auto 80px;
 }
 .feature-card {
   text-align: center;
-  padding: 40px 24px;
-  background: white;
+  padding: 32px 20px;
+  background: #fafafa;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
 }
 .feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-color: #2080f0;
+  box-shadow: 0 4px 16px rgba(32, 128, 240, 0.1);
 }
-.icon-wrapper {
-  font-size: 40px;
-  margin-bottom: 20px;
+.icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border-radius: 14px;
+  margin: 0 auto 16px;
 }
+.icon.blue { background: #e6f4ff; }
+.icon.green { background: #e6fffb; }
+.icon.orange { background: #fff7e6; }
+.icon.purple { background: #f9f0ff; }
 .feature-card h3 {
-  margin-bottom: 12px;
+  font-size: 16px;
   color: #1a1a2e;
-  font-size: 18px;
-  font-weight: 600;
+  margin-bottom: 8px;
 }
 .feature-card p {
   color: #666;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
+  margin: 0;
 }
 .quick-start {
-  max-width: 800px;
+  max-width: 640px;
   margin: 0 auto;
-  background: white;
+  background: #fafafa;
   border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 32px;
+  border: 1px solid #f0f0f0;
 }
 .quick-start h2 {
   text-align: center;
   color: #1a1a2e;
-  margin-bottom: 24px;
-  font-size: 24px;
+  margin-bottom: 20px;
+  font-size: 20px;
 }
 .code-block {
   background: #1a1a2e;
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   overflow-x: auto;
 }
 .code-block pre {
   margin: 0;
   color: #e4e8ec;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.6;
 }
 @media (max-width: 640px) {
   .hero h1 {
-    font-size: 32px;
-  }
-  .subtitle {
-    font-size: 16px;
+    font-size: 28px;
   }
   .home-page {
     padding: 40px 16px 80px;

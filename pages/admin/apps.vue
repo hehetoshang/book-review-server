@@ -2,15 +2,15 @@
   <AdminLayout>
     <div class="apps-page">
       <div class="page-header">
-        <n-h2>应用管理</n-h2>
+        <h1 class="page-title">应用管理</h1>
         <n-button type="primary" @click="showCreateModal = true">
           创建应用
         </n-button>
       </div>
 
-      <n-card>
+      <n-card class="table-card">
         <n-space class="mb-4">
-          <n-input v-model:value="search" placeholder="搜索应用名称或ID" style="width: 300px" @keyup.enter="loadApps" />
+          <n-input v-model:value="search" placeholder="搜索应用名称或ID" style="width: 240px" @keyup.enter="loadApps" />
           <n-button @click="loadApps">搜索</n-button>
         </n-space>
 
@@ -19,13 +19,13 @@
           :data="apps"
           :loading="loading"
           :pagination="pagination"
+          :row-key="(row: any) => row.id"
           remote
           @update:page="handlePageChange"
           @update:page-size="handlePageSizeChange"
         />
       </n-card>
 
-      <!-- Create App Modal -->
       <n-modal v-model:show="showCreateModal" preset="dialog" title="创建应用">
         <template #default>
           <n-form ref="createFormRef" :model="createForm" :rules="createRules">
@@ -33,7 +33,7 @@
               <n-input v-model:value="createForm.name" placeholder="请输入应用名称" />
             </n-form-item>
             <n-form-item label="允许域名" path="domains">
-              <n-input v-model:value="createForm.domains" placeholder="多个域名用逗号分隔，留空表示允许所有" />
+              <n-input v-model:value="createForm.domains" placeholder="多个域名用逗号分隔" />
             </n-form-item>
           </n-form>
         </template>
@@ -47,24 +47,23 @@
         </template>
       </n-modal>
 
-      <!-- Show App Credentials Modal -->
       <n-modal v-model:show="showCredentialsModal" preset="dialog" title="应用创建成功">
         <template #default>
           <n-alert type="success" class="mb-4">
-            应用已创建成功！请妥善保管以下凭证。
+            请妥善保管以下凭证。
           </n-alert>
           <n-form>
             <n-form-item label="App ID">
               <n-input :value="newApp?.appId" readonly>
                 <template #suffix>
-                  <n-button text @click="copyToClipboard(newApp?.appId)">复制</n-button>
+                  <n-button text @click="copyText(newApp?.appId)">复制</n-button>
                 </template>
               </n-input>
             </n-form-item>
             <n-form-item label="Secret">
               <n-input :value="newApp?.secret" readonly type="password" show-password-on="click">
                 <template #suffix>
-                  <n-button text @click="copyToClipboard(newApp?.secret)">复制</n-button>
+                  <n-button text @click="copyText(newApp?.secret)">复制</n-button>
                 </template>
               </n-input>
             </n-form-item>
@@ -79,14 +78,15 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, h } from 'vue'
 import {
-  NCard, NH2, NSpace, NButton, NInput, NDataTable, NModal, NForm, NFormItem, NAlert, useMessage,
+  NCard, NSpace, NButton, NInput, NDataTable, NModal, NForm, NFormItem, NAlert, useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import type { App } from '~/types'
+import AdminLayout from '~/components/AdminLayout.vue'
 
 const message = useMessage()
-const apps = ref<App[]>([])
+const apps = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
 const page = ref(1)
@@ -97,7 +97,7 @@ const showCreateModal = ref(false)
 const showCredentialsModal = ref(false)
 const creating = ref(false)
 const createForm = ref({ name: '', domains: '' })
-const newApp = ref<App | null>(null)
+const newApp = ref<any>(null)
 
 const createRules = {
   name: { required: true, message: '请输入应用名称', trigger: 'blur' },
@@ -106,34 +106,29 @@ const createRules = {
 const pagination = computed(() => ({
   page: page.value,
   pageSize: pageSize.value,
-  itemCount: total.value,
+  pageCount: Math.ceil(total.value / pageSize.value) || 1,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
 }))
 
-const columns: DataTableColumns<App> = [
-  { title: 'App ID', key: 'appId', ellipsis: { tooltip: true }, width: 200 },
+const columns: DataTableColumns<any> = [
+  { title: 'App ID', key: 'appId', width: 180, ellipsis: { tooltip: true } },
   { title: '应用名称', key: 'name' },
   { title: '域名', key: 'domains', ellipsis: { tooltip: true } },
-  {
-    title: '评论数',
-    key: '_count',
-    width: 100,
-    render: (row) => row._count?.comments || 0,
-  },
-  {
-    title: '状态',
-    key: 'isActive',
+  { title: '评论数', key: '_count', width: 100, render: (row) => row._count?.comments || 0 },
+  { 
+    title: '状态', 
+    key: 'isActive', 
     width: 80,
     render: (row) => row.isActive ? '启用' : '禁用',
   },
   {
     title: '操作',
     key: 'actions',
-    width: 150,
+    width: 140,
     render: (row) => h('div', { style: 'display:flex;gap:8px;' }, [
       h(NButton, { size: 'small', onClick: () => navigateTo(`/admin/apps/${row.id}`) }, { default: () => '详情' }),
-      h(NButton, { size: 'small', type: row.isActive ? 'warning' : 'success', onClick: () => toggleAppStatus(row) }, { default: () => row.isActive ? '禁用' : '启用' }),
+      h(NButton, { size: 'small', type: row.isActive ? 'warning' : 'success', onClick: () => toggleStatus(row) }, { default: () => row.isActive ? '禁用' : '启用' }),
     ]),
   },
 ]
@@ -193,24 +188,24 @@ const handleCreateApp = async () => {
   }
 }
 
-const toggleAppStatus = async (app: App) => {
+const toggleStatus = async (row: any) => {
   try {
     const { token } = useAuthStore()
-    await $fetch(`/api/admin/apps/${app.id}`, {
+    await $fetch(`/api/admin/apps/${row.id}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token.value}` },
-      body: { isActive: !app.isActive },
+      body: { isActive: !row.isActive },
     })
-    message.success(app.isActive ? '已禁用' : '已启用')
+    message.success(row.isActive ? '已禁用' : '已启用')
     loadApps()
   } catch (e: any) {
     message.error(e.data?.statusMessage || '操作失败')
   }
 }
 
-const copyToClipboard = (text?: string) => {
+const copyText = (text?: string) => {
   if (text && navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => message.success('已复制到剪贴板'))
+    navigator.clipboard.writeText(text).then(() => message.success('已复制'))
   }
 }
 
@@ -222,7 +217,16 @@ onMounted(loadApps)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+.table-card {
+  border-radius: 16px;
 }
 .mb-4 {
   margin-bottom: 16px;

@@ -15,11 +15,7 @@
               type="email"
               placeholder="your@email.com"
               size="large"
-            >
-              <template #prefix>
-                <span class="icon">📧</span>
-              </template>
-            </n-input>
+            />
           </n-form-item>
           <n-form-item label="密码" path="password">
             <n-input 
@@ -27,18 +23,14 @@
               type="password"
               placeholder="请输入密码"
               size="large"
-            >
-              <template #prefix>
-                <span class="icon">🔒</span>
-              </template>
-            </n-input>
+            />
           </n-form-item>
           <n-button type="primary" block size="large" :loading="loading" attr-type="submit">
             登录
           </n-button>
         </n-form>
         
-        <n-alert v-if="error" type="error" closable class="mt-4" :closable="false">
+        <n-alert v-if="error" type="error" class="mt-4">
           {{ error }}
         </n-alert>
         
@@ -92,18 +84,18 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f5f5;
   padding: 20px;
 }
 .login-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
 }
 .login-card {
   background: white;
   border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  padding: 48px 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 .logo-section {
   text-align: center;
@@ -117,20 +109,19 @@ const handleLogin = async () => {
   height: 64px;
   font-size: 32px;
   background: linear-gradient(135deg, #2080f0 0%, #63e2b7 100%);
-  border-radius: 16px;
+  border-radius: 18px;
   margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(32, 128, 240, 0.3);
 }
 .logo-section h1 {
-  font-size: 24px;
+  font-size: 22px;
   color: #1a1a2e;
   margin-bottom: 8px;
+  font-weight: 600;
 }
 .subtitle {
   color: #666;
   font-size: 14px;
-}
-.icon {
-  font-size: 16px;
 }
 .mt-4 {
   margin-top: 16px;
@@ -139,7 +130,7 @@ const handleLogin = async () => {
   text-align: center;
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #f0f0f0;
 }
 .footer p {
   color: #999;

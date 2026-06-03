@@ -1,13 +1,14 @@
 <template>
   <AdminLayout>
     <div class="comments-page">
-      <n-h2>评论管理</n-h2>
+      <div class="page-header">
+        <h1 class="page-title">评论管理</h1>
+      </div>
 
-      <n-card>
-        <n-space class="mb-4">
+      <n-card class="table-card">
+        <n-space class="mb-4" wrap>
           <n-input v-model:value="search" placeholder="搜索评论内容" style="width: 200px" />
-          <n-select v-model:value="filterAppId" :options="appOptions" placeholder="选择应用" style="width: 200px" clearable />
-          <n-input v-model:value="filterChapterId" placeholder="章节ID" style="width: 120px" />
+          <n-select v-model:value="filterAppId" :options="appOptions" placeholder="选择应用" style="width: 180px" clearable />
           <n-button @click="loadComments">筛选</n-button>
         </n-space>
 
@@ -16,6 +17,7 @@
           :data="comments"
           :loading="loading"
           :pagination="pagination"
+          :row-key="(row: any) => row.id"
           remote
           @update:page="handlePageChange"
           @update:page-size="handlePageSizeChange"
@@ -26,19 +28,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, h } from 'vue'
 import {
-  NCard, NH2, NSpace, NInput, NButton, NDataTable, NSelect, useMessage, useDialog,
+  NCard, NSpace, NInput, NButton, NDataTable, NSelect, useMessage, useDialog,
   type DataTableColumns,
 } from 'naive-ui'
-import type { Comment } from '~/types'
+import AdminLayout from '~/components/AdminLayout.vue'
 
 const message = useMessage()
 const dialog = useDialog()
-const comments = ref<Comment[]>([])
+const comments = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
 const filterAppId = ref('')
-const filterChapterId = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -47,21 +49,20 @@ const appOptions = ref<{ label: string; value: string }[]>([])
 const pagination = computed(() => ({
   page: page.value,
   pageSize: pageSize.value,
-  itemCount: total.value,
+  pageCount: Math.ceil(total.value / pageSize.value) || 1,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
 }))
 
-const columns: DataTableColumns<Comment> = [
-  { title: 'ID', key: 'id', width: 60 },
-  { title: '应用', key: 'appName', width: 150 },
+const columns: DataTableColumns<any> = [
+  { title: 'ID', key: 'id', width: 70 },
+  { title: '应用', key: 'appName', width: 140 },
   { title: '章节', key: 'chapterName', ellipsis: { tooltip: true } },
-  { title: '内容', key: 'content', ellipsis: { tooltip: true }, width: 300 },
+  { title: '内容', key: 'content', ellipsis: { tooltip: true }, width: 280 },
   { title: '用户', key: 'nickname', width: 120 },
-  { title: '楼层', key: 'level', width: 60 },
-  {
-    title: '时间',
-    key: 'createdAt',
+  { 
+    title: '时间', 
+    key: 'createdAt', 
     width: 160,
     render: (row) => new Date(row.createdAt).toLocaleString('zh-CN'),
   },
@@ -80,7 +81,6 @@ const loadComments = async () => {
     const params: Record<string, string> = { page: String(page.value), limit: String(pageSize.value) }
     if (search.value) params.search = search.value
     if (filterAppId.value) params.appId = filterAppId.value
-    if (filterChapterId.value) params.chapterId = filterChapterId.value
     const res: any = await $fetch('/api/admin/comments', {
       headers: { Authorization: `Bearer ${token.value}` },
       query: params,
@@ -122,10 +122,10 @@ const handlePageSizeChange = (ps: number) => {
   loadComments()
 }
 
-const handleDelete = (comment: Comment) => {
+const handleDelete = (comment: any) => {
   dialog.warning({
     title: '确认删除',
-    content: `确定要删除评论"${comment.content.slice(0, 30)}..."吗？`,
+    content: `确定要删除这条评论吗？`,
     positiveText: '删除',
     negativeText: '取消',
     onPositiveClick: async () => {
@@ -151,6 +151,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.page-header {
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+.table-card {
+  border-radius: 16px;
+}
 .mb-4 {
   margin-bottom: 16px;
 }
