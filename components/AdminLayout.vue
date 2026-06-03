@@ -89,6 +89,7 @@ const themeOverrides = {
 const menuOptions: MenuOption[] = [
   { label: '仪表盘', key: 'dashboard' },
   { label: '应用管理', key: 'apps' },
+  { label: '用户管理', key: 'users' },
   { label: '评论管理', key: 'comments' },
   { label: '个人设置', key: 'settings' },
 ]
@@ -98,6 +99,7 @@ watch(
   () => route.path,
   (path) => {
     if (path.includes('/apps')) activeMenu.value = 'apps'
+    else if (path.includes('/users')) activeMenu.value = 'users'
     else if (path.includes('/comments')) activeMenu.value = 'comments'
     else if (path.includes('/settings')) activeMenu.value = 'settings'
     else activeMenu.value = 'dashboard'
@@ -110,6 +112,7 @@ const breadcrumbs = computed(() => {
     dashboard: ['仪表盘'],
     apps: ['应用管理'],
     'apps/create': ['应用管理', '创建应用'],
+    users: ['用户管理'],
     comments: ['评论管理'],
     settings: ['个人设置'],
   }
@@ -121,6 +124,7 @@ const handleMenuClick = (key: string) => {
   const routes: Record<string, string> = {
     dashboard: '/admin',
     apps: '/admin/apps',
+    users: '/admin/users',
     comments: '/admin/comments',
     settings: '/admin/settings',
   }
