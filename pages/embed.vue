@@ -198,7 +198,16 @@ const handleRegister = async () => {
       },
     })
     if (res.err === 'ok') {
-      authTab.value = 'login'
+      // 注册成功后直接登录
+      const loginRes: any = await $fetch('/api/auth/login', {
+        method: 'POST',
+        body: { email: registerForm.value.email, password: registerForm.value.password },
+      })
+      if (loginRes.data?.token) {
+        internalToken.value = loginRes.data.token
+        isLoggedIn.value = true
+        notifyParent('login', { userId: loginRes.data.user?.id })
+      }
     }
   } catch (e: any) {
     console.error('Register failed:', e.data?.statusMessage || e.message)
@@ -246,7 +255,6 @@ const formatTime = (date: string | Date) => {
 // Handle proxy login if token is provided
 const handleProxyLogin = async () => {
   if (!initialToken) {
-    loading.value = false
     return
   }
 
@@ -267,8 +275,6 @@ const handleProxyLogin = async () => {
     }
   } catch (e) {
     console.error('Proxy login failed:', e)
-  } finally {
-    loading.value = false
   }
 }
 
@@ -289,19 +295,20 @@ onMounted(() => {
       }
     })
   }
-})
 
-// Initialize
-onMounted(async () => {
-  if (initialToken) {
-    await handleProxyLogin()
-  } else {
-    loading.value = false
-  }
-  if (isLoggedIn.value || !initialToken) {
+  // Initialize
+  const init = async () => {
+    if (initialToken) {
+      await handleProxyLogin()
+    } else {
+      loading.value = false
+    }
+    // Always load comments
     await loadComments()
+    updateHeight()
   }
-  updateHeight()
+
+  init()
 })
 
 watch([comments, isLoggedIn], () => {
