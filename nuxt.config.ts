@@ -111,5 +111,13 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: ['jsdom', 'dompurify'],
     },
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
+    },
   },
 })
