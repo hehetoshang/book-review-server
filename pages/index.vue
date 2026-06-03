@@ -5,11 +5,11 @@
       <h1>评论开放平台</h1>
       <p class="subtitle">全栈、可嵌入的第三方评论服务</p>
       <div class="actions">
-        <n-button type="primary" size="large" @click="navigateTo('/admin/login')">
-          进入管理后台
+        <n-button type="primary" size="large" @click="navigateTo('/login')">
+          用户登录
         </n-button>
-        <n-button size="large" @click="navigateTo('/docs')">
-          开发者文档
+        <n-button size="large" @click="navigateTo('/admin/login')">
+          管理后台
         </n-button>
       </div>
     </div>
