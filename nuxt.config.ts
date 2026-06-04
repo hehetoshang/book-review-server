@@ -108,9 +108,6 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    optimizeDeps: {
-      include: ['jsdom', 'dompurify'],
-    },
     server: {
       proxy: {
         '/api': {
