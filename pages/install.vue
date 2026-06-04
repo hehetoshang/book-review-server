@@ -31,30 +31,91 @@
           <!-- Step 1: Database Config -->
           <div v-if="step === 1" class="step-panel">
             <v-form ref="dbFormRef" v-model="dbFormValid">
-              <v-alert type="info" variant="tonal" class="mb-4">
-                <template #title>MySQL 数据库配置</template>
-                请确保数据库已创建，并填写连接信息。安装完成后需将生成的配置写入 <code>.env</code> 文件。
+              <!-- Database Type Selector -->
+              <div class="mb-6">
+                <label class="text-subtitle-1 mb-2 d-block">选择数据库类型</label>
+                <v-item-group v-model="db.type" mandatory>
+                  <v-row>
+                    <v-col v-for="opt in dbTypes" :key="opt.value" cols="4">
+                      <v-item v-slot="{ isSelected, toggle }">
+                        <v-card
+                          variant="outlined"
+                          :class="{ 'selected-card': isSelected }"
+                          class="pa-4 text-center db-type-card"
+                          :color="isSelected ? 'primary' : undefined"
+                          @click="toggle"
+                        >
+                          <v-icon size="36" :icon="opt.icon" :color="isSelected ? 'primary' : 'grey'" class="mb-2" />
+                          <div class="text-subtitle-2">{{ opt.label }}</div>
+                          <div class="text-caption text-medium-emphasis">{{ opt.desc }}</div>
+                        </v-card>
+                      </v-item>
+                    </v-col>
+                  </v-row>
+                </v-item-group>
+              </div>
+
+              <!-- SQLite Info -->
+              <v-alert v-if="db.type === 'sqlite'" type="info" variant="tonal" class="mb-4">
+                <template #title>SQLite 数据库</template>
+                SQLite 将自动创建在固定位置：<code>{{ sqlitePath }}</code><br />
+                适合小型部署，无需额外配置。
               </v-alert>
 
-              <v-row>
-                <v-col cols="8">
-                  <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" />
-                </v-col>
-                <v-col cols="4">
-                  <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="3306" variant="outlined" :rules="[v => !!v || '必填']" />
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="6">
-                  <v-text-field v-model="db.user" label="用户名" placeholder="root" variant="outlined" :rules="[v => !!v || '必填']" />
-                </v-col>
-                <v-col cols="6">
-                  <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" />
-                </v-col>
-              </v-row>
-              <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" />
+              <!-- MySQL Config -->
+              <div v-if="db.type === 'mysql'">
+                <v-alert type="info" variant="tonal" class="mb-4">
+                  <template #title>MySQL 数据库配置</template>
+                  请确保数据库已创建，并填写连接信息。
+                </v-alert>
 
-              <v-btn color="info" variant="tonal" :loading="testingDb" @click="testDb" class="mb-2">
+                <v-row>
+                  <v-col cols="8">
+                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                  <v-col cols="4">
+                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="3306" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6">
+                    <v-text-field v-model="db.user" label="用户名" placeholder="root" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                  <v-col cols="6">
+                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" />
+                  </v-col>
+                </v-row>
+                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" />
+              </div>
+
+              <!-- PostgreSQL Config -->
+              <div v-if="db.type === 'postgresql'">
+                <v-alert type="info" variant="tonal" class="mb-4">
+                  <template #title>PostgreSQL 数据库配置</template>
+                  请确保数据库已创建，并填写连接信息。
+                </v-alert>
+
+                <v-row>
+                  <v-col cols="8">
+                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                  <v-col cols="4">
+                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="5432" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6">
+                    <v-text-field v-model="db.user" label="用户名" placeholder="postgres" variant="outlined" :rules="[v => !!v || '必填']" />
+                  </v-col>
+                  <v-col cols="6">
+                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" />
+                  </v-col>
+                </v-row>
+                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" />
+              </div>
+
+              <!-- Test Connection Button (only for MySQL/PostgreSQL) -->
+              <v-btn v-if="db.type !== 'sqlite'" color="info" variant="tonal" :loading="testingDb" @click="testDb" class="mb-2">
                 <v-icon start icon="mdi-database-check" /> 测试连接
               </v-btn>
               <div v-if="dbConnected" class="text-success text-caption mb-2">
@@ -81,7 +142,7 @@
             <v-card-title class="text-h5 justify-center">安装完成！</v-card-title>
             <v-card-subtitle>您的评论平台已成功部署</v-card-subtitle>
 
-            <v-alert type="warning" variant="tonal" class="mt-4 mb-4 text-left">
+            <v-alert v-if="envConfig" type="warning" variant="tonal" class="mt-4 mb-4 text-left">
               <template #title>重要：请复制以下配置并更新 <code>.env</code> 文件</template>
               <pre class="env-code mt-2">{{ envConfig }}</pre>
               <v-btn size="small" color="primary" variant="text" @click="copyEnv">复制配置</v-btn>
@@ -122,7 +183,24 @@ const error = ref('')
 const successMsg = ref('')
 const appId = ref('')
 
-const db = ref({ host: 'localhost', port: 3306, user: 'root', password: '', database: 'chapter_comments' })
+// Database type options
+const dbTypes = [
+  { value: 'sqlite', label: 'SQLite', desc: '轻量级，免配置', icon: 'mdi-database' },
+  { value: 'mysql', label: 'MySQL', desc: '高性能，常用', icon: 'mdi-database-outline' },
+  { value: 'postgresql', label: 'PostgreSQL', desc: '企业级，功能强大', icon: 'mdi-database-sync' },
+]
+
+// SQLite 固定路径
+const sqlitePath = 'data/chapter_comments.db'
+
+const db = ref({
+  type: 'sqlite',
+  host: 'localhost',
+  port: 3306,
+  user: 'root',
+  password: '',
+  database: 'chapter_comments',
+})
 const admin = ref({ username: '', email: '', nickname: '', password: '', confirmPassword: '', siteName: '评论开放平台' })
 
 const dbFormRef = ref()
@@ -134,27 +212,51 @@ const usernameRules = [
 ]
 
 const canProceed = computed(() => {
-  if (step.value === 1) return dbConnected.value
+  if (step.value === 1) {
+    // SQLite 不需要测试连接，直接可用
+    if (db.value.type === 'sqlite') return true
+    return dbConnected.value
+  }
   if (step.value === 2) return adminFormValid.value
   return false
 })
 
 const envConfig = computed(() => {
-  return `DATABASE_URL="mysql://${db.value.user}:${db.value.password}@${db.value.host}:${db.value.port}/${db.value.database}"`
+  if (db.value.type === 'sqlite') {
+    return `# 数据库配置 (SQLite)\nDATABASE_URL="sqlite+aiosqlite:///./data/chapter_comments.db"\nDATABASE_TYPE="sqlite"`
+  }
+  if (db.value.type === 'mysql') {
+    return `# 数据库配置 (MySQL)\nDATABASE_URL="mysql+aiomysql://${db.value.user}:${encodeURIComponent(db.value.password)}@${db.value.host}:${db.value.port}/${db.value.database}"\nDATABASE_TYPE="mysql"`
+  }
+  if (db.value.type === 'postgresql') {
+    return `# 数据库配置 (PostgreSQL)\nDATABASE_URL="postgresql+asyncpg://${db.value.user}:${encodeURIComponent(db.value.password)}@${db.value.host}:${db.value.port}/${db.value.database}"\nDATABASE_TYPE="postgresql"`
+  }
+  return ''
 })
 
 const testDb = async () => {
   testingDb.value = true
   error.value = ''
   try {
-    // In production, this would call a real test endpoint.
-    // For now, we just validate format and proceed.
-    if (!db.value.host || !db.value.database) throw new Error('请填写完整信息')
-    await new Promise(r => setTimeout(r, 800))
-    dbConnected.value = true
-    successMsg.value = '数据库连接成功，请更新 .env 后重启服务'
+    const res: any = await $fetch('/api/install/test-db', {
+      method: 'POST',
+      body: {
+        type: db.value.type,
+        host: db.value.host,
+        port: db.value.port,
+        user: db.value.user,
+        password: db.value.password,
+        database: db.value.database,
+      },
+    })
+    if (res.err === 'ok') {
+      dbConnected.value = true
+      successMsg.value = '数据库连接成功'
+    } else {
+      throw new Error(res.message || '连接失败')
+    }
   } catch (e: any) {
-    error.value = e.message || '连接失败'
+    error.value = e.data?.message || e.message || '连接失败'
   } finally {
     testingDb.value = false
   }
@@ -174,10 +276,14 @@ const handleInstall = async () => {
   try {
     const res: any = await $fetch('/api/install/setup', {
       method: 'POST',
-      body: admin.value,
+      body: {
+        ...admin.value,
+        databaseType: db.value.type,
+        databaseUrl: buildDatabaseUrl(),
+      },
     })
-    if (res.data) {
-      appId.value = res.data.app?.appId || ''
+    if (res.err === 'ok' || res.data) {
+      appId.value = res.data?.app?.appId || res.data?.appId || ''
       step.value = 3
       // Mark installed
       if (import.meta.client) {
@@ -185,10 +291,23 @@ const handleInstall = async () => {
       }
     }
   } catch (e: any) {
-    error.value = e.data?.statusMessage || e.message || '安装失败'
+    error.value = e.data?.statusMessage || e.data?.message || e.message || '安装失败'
   } finally {
     installing.value = false
   }
+}
+
+const buildDatabaseUrl = () => {
+  if (db.value.type === 'sqlite') {
+    return 'sqlite+aiosqlite:///./data/chapter_comments.db'
+  }
+  if (db.value.type === 'mysql') {
+    return `mysql+aiomysql://${db.value.user}:${encodeURIComponent(db.value.password)}@${db.value.host}:${db.value.port}/${db.value.database}`
+  }
+  if (db.value.type === 'postgresql') {
+    return `postgresql+asyncpg://${db.value.user}:${encodeURIComponent(db.value.password)}@${db.value.host}:${db.value.port}/${db.value.database}`
+  }
+  return ''
 }
 
 const copyEnv = () => {
@@ -199,6 +318,11 @@ const copyEnv = () => {
 const goToHome = () => navigateTo('/')
 
 onMounted(() => {
+  // If SQLite, auto-approve
+  if (db.value.type === 'sqlite') {
+    dbConnected.value = true
+  }
+  
   if (import.meta.client && sessionStorage.getItem('install_done')) {
     navigateTo('/', { redirectCode: 302 })
   }
@@ -229,5 +353,17 @@ onMounted(() => {
   font-family: monospace;
   font-size: 13px;
   white-space: pre-wrap;
+}
+.db-type-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-width: 2px;
+}
+.db-type-card:hover {
+  border-color: #2080f0;
+}
+.selected-card {
+  border-color: #2080f0 !important;
+  background: rgba(32, 128, 240, 0.05);
 }
 </style>

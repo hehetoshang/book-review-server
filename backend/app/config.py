@@ -9,13 +9,25 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 5
     node_env: str = "development"
 
-    database_url: str = "sqlite:///./dev.db"
+    database_type: str = "sqlite"  # sqlite, mysql, postgresql
+    database_url: str = ""
 
     cors_origins: List[str] = ["*"]
     cors_allow_credentials: bool = True
 
     host: str = "0.0.0.0"
     port: int = 8000
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # 如果 database_url 未设置，根据 database_type 生成默认值
+        if not self.database_url:
+            if self.database_type == "sqlite":
+                self.database_url = "sqlite+aiosqlite:///./data/chapter_comments.db"
+            elif self.database_type == "mysql":
+                self.database_url = "mysql+aiomysql://root:password@localhost:3306/chapter_comments"
+            elif self.database_type == "postgresql":
+                self.database_url = "postgresql+asyncpg://postgres:password@localhost:5432/chapter_comments"
 
     @property
     def jwt_expires_seconds(self) -> int:
