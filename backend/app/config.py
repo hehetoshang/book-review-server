@@ -1,5 +1,12 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List
+
+# 项目根目录（backend/ 目录的上级）
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+DATA_DIR = PROJECT_ROOT / "data"
 
 
 class Settings(BaseSettings):
@@ -23,7 +30,9 @@ class Settings(BaseSettings):
         # 如果 database_url 未设置，根据 database_type 生成默认值
         if not self.database_url:
             if self.database_type == "sqlite":
-                self.database_url = "sqlite+aiosqlite:///./data/chapter_comments.db"
+                DATA_DIR.mkdir(exist_ok=True)
+                db_path = DATA_DIR / "chapter_comments.db"
+                self.database_url = f"sqlite+aiosqlite:///{db_path}"
             elif self.database_type == "mysql":
                 self.database_url = "mysql+aiomysql://root:password@localhost:3306/chapter_comments"
             elif self.database_type == "postgresql":

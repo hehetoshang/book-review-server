@@ -9,7 +9,7 @@ from sqlalchemy import select, func
 
 from app.database import get_db
 from app.models import User
-from app.config import settings
+from app.config import settings, DATA_DIR
 from app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/install", tags=["install"])
@@ -117,11 +117,10 @@ async def setup(body: dict, db: AsyncSession = Depends(get_db)):
     if database_type not in DB_DRIVERS:
         return JSONResponse(status_code=400, content={"err": "error", "message": "不支持的数据库类型"})
 
-    # 如果使用 SQLite，确保数据目录存在
+    # 如果使用 SQLite，确保数据目录存在（使用绝对路径）
     if database_type == "sqlite":
-        data_dir = Path("data")
-        data_dir.mkdir(exist_ok=True)
-        database_url = "sqlite+aiosqlite:///./data/chapter_comments.db"
+        DATA_DIR.mkdir(exist_ok=True)
+        database_url = f"sqlite+aiosqlite:///{DATA_DIR / 'chapter_comments.db'}"
 
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
