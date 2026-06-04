@@ -6,7 +6,7 @@ from gettext import gettext as _
 
 import tornado.escape
 from handlers.base import BaseHandler, auth, js
-from models import Review, ReviewBook, ReviewChapter
+from models import Review, ReviewBook, ReviewChapter, ReviewType
 
 from sqlalchemy import func, or_
 from utils import super_strip
@@ -211,9 +211,48 @@ class ReviewGetBook(BaseHandler):
         return {"err": "ok", "data": row.to_dict()}
 
 
+class ReviewBookList(BaseHandler):
+    """获取「整本书」的评论列表，支持「最新 / 热门」排序与分页"""
+
+    @js
+    def get(self):
+        book_id = self.get_argument("book_id", "").strip()
+        sort = self.get_argument("sort", "latest").strip()
+        if not book_id or not book_id.isdigit():
+            return {"err": "params.invalid", "msg": _("参数错误")}
+
+        try:
+            page = max(1, int(self.get_argument("page", "1")))
+        except ValueError:
+            page = 1
+        try:
+            size = min(50, max(1, int(self.get_argument("size", "20"))))
+        except ValueError:
+            size = 20
+
+        # 整本书的「顶层文字评论」：排除点赞/踩，排除回复（只取 root）
+        q = self.session.query(Review).filter(
+            Review.book_id == int(book_id),
+            Review.type == ReviewType.text,
+            Review.root_id.is_(None),
+        )
+
+        total = q.count()
+
+        if sort == "hot":
+            q = q.order_by(Review.like_count.desc(), Review.create_time.desc())
+        else:
+            q = q.order_by(Review.create_time.desc())
+
+        q = q.offset((page - 1) * size).limit(size)
+        data = [row.to_full_dict(self.current_user) for row in q.all()]
+        return {"err": "ok", "data": {"list": data, "total": total, "page": page, "size": size}}
+
+
 def routes():
     return [
         (r"/api/review/book", ReviewGetBook),
+        (r"/api/review/book/list", ReviewBookList),
         (r"/api/review/summary", ReviewSummary),
         (r"/api/review/list", ReviewList),
         (r"/api/review/add", ReviewAdd),

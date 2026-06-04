@@ -290,6 +290,54 @@ class TestUserSignUp(TestWithUserLogin):
         return "Basic " + base64.encodebytes(s.encode("ascii")).decode("ascii")
 
 
+class TestReviewBookList(TestApp):
+    def test_book_list(self):
+        # 缺 book_id 参数校验
+        d = self.json("/api/review/book/list")
+        self.assertEqual(d["err"], "params.invalid")
+
+        # 准备一本书 + 两条评论：old-hot（旧、高赞）、new-cold（新、低赞）
+        import datetime
+        db = get_db()
+        book = models.ReviewBook(title="booklist-ut", alias="booklist-ut")
+        db.add(book)
+        db.flush()
+        now = datetime.datetime.now()
+        r1 = models.Review(
+            book_id=book.id, chapter_id=0, segment_id=0, type=models.ReviewType.text,
+            content="old-hot", like_count=100, user_id=1,
+            create_time=now - datetime.timedelta(hours=2), update_time=now - datetime.timedelta(hours=2),
+        )
+        r2 = models.Review(
+            book_id=book.id, chapter_id=0, segment_id=0, type=models.ReviewType.text,
+            content="new-cold", like_count=1, user_id=1, create_time=now, update_time=now,
+        )
+        db.add_all([r1, r2])
+        db.commit()
+
+        try:
+            # 最新：new-cold 在前
+            d = self.json(f"/api/review/book/list?book_id={book.id}&sort=latest")
+            self.assertEqual(d["err"], "ok")
+            self.assertEqual(d["data"]["total"], 2)
+            self.assertEqual(d["data"]["list"][0]["content"], "new-cold")
+            self.assertEqual(d["data"]["list"][0]["likeCount"], 1)
+
+            # 热门：old-hot 在前
+            d = self.json(f"/api/review/book/list?book_id={book.id}&sort=hot")
+            self.assertEqual(d["data"]["list"][0]["content"], "old-hot")
+            self.assertEqual(d["data"]["list"][0]["likeCount"], 100)
+
+            # 分页：size=1 只返回一条，total 仍为 2
+            d = self.json(f"/api/review/book/list?book_id={book.id}&sort=latest&size=1")
+            self.assertEqual(len(d["data"]["list"]), 1)
+            self.assertEqual(d["data"]["total"], 2)
+        finally:
+            db.query(models.Review).filter(models.Review.book_id == book.id).delete()
+            db.query(models.ReviewBook).filter(models.ReviewBook.id == book.id).delete()
+            db.commit()
+
+
 class TestJsonResponse(TestApp):
     def raise_(self, err):
         raise err

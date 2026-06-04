@@ -172,6 +172,7 @@ class Review(Base):
     type = Column(Integer, default=0)  # ReviewType：文字、点赞、踩
     level = Column(Integer, default=0)  # 评论楼层
     content = Column(String(1024), default="")  # 评论内容
+    refer_text = Column(String(1024), default="")  # 被评论的书籍正文片段（划线/段落原文）
     create_time = Column(DateTime)
     update_time = Column(DateTime)
     geo = Column(String(255), default="")
@@ -211,10 +212,14 @@ class Review(Base):
         d["bookId"] = row.book_id
         d["chapterId"] = row.chapter_id
         d["content"] = row.content
+        d["referText"] = row.refer_text
+        d["cfi"] = row.cfi
         d["segmentId"] = row.segment_id
         d["type"] = row.type
         d["geo"] = row.geo
         d["level"] = row.level
+        d["likeCount"] = row.like_count
+        d["dislikeCount"] = row.dislike_count
         d["createTime"] = row.create_time.strftime("%Y-%m-%d %H:%M:%S")
         d["updateTime"] = row.update_time.strftime("%Y-%m-%d %H:%M:%S")
         d["userId"] = row.user.id
