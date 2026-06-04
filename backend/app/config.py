@@ -1,12 +1,5 @@
-import os
-from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List
-
-# 项目根目录（backend/ 目录的上级）
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = BACKEND_DIR.parent
-DATA_DIR = PROJECT_ROOT / "data"
 
 
 class Settings(BaseSettings):
@@ -27,9 +20,14 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 如果 database_url 未设置（未安装状态），使用内存数据库，不创建文件
+        # 如果 database_url 未设置，根据 database_type 生成默认值
         if not self.database_url:
-            self.database_url = "sqlite+aiosqlite:///:memory:"
+            if self.database_type == "sqlite":
+                self.database_url = "sqlite+aiosqlite:///./data/chapter_comments.db"
+            elif self.database_type == "mysql":
+                self.database_url = "mysql+aiomysql://root:password@localhost:3306/chapter_comments"
+            elif self.database_type == "postgresql":
+                self.database_url = "postgresql+asyncpg://postgres:password@localhost:5432/chapter_comments"
 
     @property
     def jwt_expires_seconds(self) -> int:
