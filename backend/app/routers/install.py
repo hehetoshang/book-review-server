@@ -1,4 +1,5 @@
 import os
+import bcrypt
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,11 +9,8 @@ from app.database import get_db
 from app.models import User
 from app.config import settings
 from app.schemas import ApiResponse
-from passlib.context import CryptContext
 
 router = APIRouter(prefix="/api/install", tags=["install"])
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SETUP_FLAG_FILE = ".setup_complete"
 
@@ -52,7 +50,7 @@ async def setup(body: dict, db: AsyncSession = Depends(get_db)):
     if len(password) < 6:
         return JSONResponse(status_code=400, content={"err": "error", "message": "密码至少需要6位"})
 
-    hashed_password = pwd_context.hash(password)
+    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     admin_user = User(
         email=email,

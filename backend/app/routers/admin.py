@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 import secrets
 
 from app.database import get_db
@@ -317,7 +318,7 @@ async def get_comments(
     total = total_result.scalar()
 
     comments_result = await db.execute(
-        select(Comment).order_by(Comment.created_at.desc()).offset(offset).limit(limit)
+        select(Comment).options(selectinload(Comment.user)).order_by(Comment.created_at.desc()).offset(offset).limit(limit)
     )
     comments = comments_result.scalars().all()
 

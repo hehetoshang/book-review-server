@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from passlib.context import CryptContext
+import bcrypt
 
 from app.database import get_db
 from app.models import User, App
@@ -18,7 +18,12 @@ import secrets
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def _hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
 
 
 @router.post("/login", response_model=ApiResponse[LoginResponse])
@@ -46,7 +51,7 @@ async def login(body: dict, response: Response, db: AsyncSession = Depends(get_d
             content={"err": "error", "message": "账号或密码错误"},
         )
 
-    if not pwd_context.verify(password, user.password):
+    if not _verify_password(password, user.password):
         return JSONResponse(
             status_code=401,
             content={"err": "error", "message": "账号或密码错误"},
@@ -117,7 +122,7 @@ async def register(body: dict, db: AsyncSession = Depends(get_db)):
             content={"err": "error", "message": "用户名已存在"},
         )
 
-    hashed_password = pwd_context.hash(password)
+    hashed_password = _hash_password(password)
 
     new_user = User(
         email=email,
@@ -184,13 +189,13 @@ async def change_password(
         )
 
     user = current_user.user_obj
-    if not user or not pwd_context.verify(old_password, user.password):
+    if not user or not _verify_password(old_password, user.password):
         return JSONResponse(
             status_code=400,
             content={"err": "error", "message": "旧密码错误"},
         )
 
-    user.password = pwd_context.hash(new_password)
+    user.password = _hash_password(new_password)
     await db.flush()
 
     return ApiResponse(data={"message": "密码修改成功"})

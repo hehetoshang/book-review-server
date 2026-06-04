@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Integer, String, Boolean, DateTime, Text, Index, func
+from sqlalchemy import Integer, String, Boolean, DateTime, Text, Index, func, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -49,11 +49,11 @@ class ThirdPartyUser(Base):
     __tablename__ = "third_party_users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    app_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    app_id: Mapped[int] = mapped_column(Integer, ForeignKey("apps.id"), nullable=False)
     external_id: Mapped[str] = mapped_column(String(255), nullable=False, name="externalId")
     external_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, name="externalEmail")
     external_nick: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, name="externalNick")
-    internal_user_id: Mapped[int] = mapped_column(Integer, nullable=False, name="internalUserId")
+    internal_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("readers.id"), nullable=False, name="internalUserId")
     last_login_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), name="lastLoginAt")
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
 
@@ -65,7 +65,7 @@ class Nonce(Base):
     __tablename__ = "nonces"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    app_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    app_id: Mapped[int] = mapped_column(Integer, ForeignKey("apps.id"), nullable=False)
     nonce: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, name="expiresAt")
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
@@ -95,7 +95,7 @@ class Comment(Base):
     __tablename__ = "reviews"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    app_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, name="appId")
+    app_id: Mapped[int] = mapped_column(Integer, ForeignKey("apps.id"), nullable=False, default=0, name="appId")
     book_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, name="bookId")
     chapter_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, name="chapterId")
     segment_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, name="segmentId")
@@ -107,7 +107,7 @@ class Comment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     geo: Mapped[str] = mapped_column(String(255), nullable=False, default="")
-    user_id: Mapped[int] = mapped_column(Integer, nullable=False, name="userId")
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("readers.id"), nullable=False, name="userId")
     root_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, name="rootId")
     quote_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, name="quoteId")
     like_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, name="likeCount")
