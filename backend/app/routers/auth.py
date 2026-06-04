@@ -5,16 +5,12 @@ from sqlalchemy import select
 import bcrypt
 
 from app.database import get_db
-from app.models import User, App
+from app.models import User
 from app.schemas import LoginResponse, UserResponse, ApiResponse
-from app.dependencies import get_current_user, CurrentUser, require_admin
+from app.dependencies import get_current_user, CurrentUser
 from app.utils.jwt import create_access_token
 from app.config import settings
-from app.utils.sanitize import sanitize_html
-from app.utils.proxy_auth import verify_proxy_signature, generate_proxy_token
-from datetime import datetime, timedelta
-import time
-import secrets
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -23,7 +19,10 @@ def _hash_password(password: str) -> str:
 
 
 def _verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 @router.post("/login", response_model=ApiResponse[LoginResponse])
@@ -63,7 +62,7 @@ async def login(body: dict, response: Response, db: AsyncSession = Depends(get_d
             content={"err": "error", "message": "账户已被禁用"},
         )
 
-    user.access_time = datetime.utcnow()
+    user.access_time = datetime.now(timezone.utc)
     await db.flush()
 
     token = create_access_token(

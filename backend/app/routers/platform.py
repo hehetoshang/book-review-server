@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models import User, App, Comment, ThirdPartyUser
@@ -176,7 +176,7 @@ async def proxy_login(
 
     try:
         ts = int(timestamp)
-        if abs(datetime.utcnow().timestamp() - ts) > 300:
+        if abs(datetime.now(timezone.utc).timestamp() - ts) > 300:
             return JSONResponse(status_code=401, content={"err": "error", "statusMessage": "请求已过期"})
     except ValueError:
         return JSONResponse(status_code=400, content={"err": "error", "statusMessage": "时间戳格式错误"})
@@ -191,7 +191,7 @@ async def proxy_login(
 
     if tp_user:
         internal_user_id = tp_user.internal_user_id
-        tp_user.last_login_at = datetime.utcnow()
+        tp_user.last_login_at = datetime.now(timezone.utc)
         await db.flush()
     else:
         username = external_id.lower()

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
@@ -9,9 +9,9 @@ from app.config import settings
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(seconds=settings.jwt_expires_seconds)
+        expire = datetime.now(timezone.utc) + timedelta(seconds=settings.jwt_expires_seconds)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt_secret, algorithm="HS256")
 

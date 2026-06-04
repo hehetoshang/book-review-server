@@ -32,15 +32,18 @@ class Settings(BaseSettings):
     @property
     def jwt_expires_seconds(self) -> int:
         """Parse jwt_expires_in to seconds. Supports formats like '7d', '24h', '3600'."""
-        expires = self.jwt_expires_in
-        if expires.endswith("d"):
-            return int(expires[:-1]) * 24 * 60 * 60
-        elif expires.endswith("h"):
-            return int(expires[:-1]) * 60 * 60
-        elif expires.endswith("m"):
-            return int(expires[:-1]) * 60
-        else:
-            return int(expires)
+        try:
+            expires = self.jwt_expires_in
+            if expires.endswith("d"):
+                return int(expires[:-1]) * 24 * 60 * 60
+            elif expires.endswith("h"):
+                return int(expires[:-1]) * 60 * 60
+            elif expires.endswith("m"):
+                return int(expires[:-1]) * 60
+            else:
+                return int(expires)
+        except (ValueError, AttributeError):
+            return 7 * 24 * 60 * 60  # Default: 7 days
 
     class Config:
         env_file = ".env"

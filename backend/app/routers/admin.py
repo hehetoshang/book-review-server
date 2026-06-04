@@ -18,7 +18,7 @@ async def get_stats(
     db: AsyncSession = Depends(get_db),
     _admin=Depends(require_admin),
 ):
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
 
     total_users_result = await db.execute(select(func.count(User.id)))
     total_users = total_users_result.scalar()
@@ -29,7 +29,7 @@ async def get_stats(
     total_comments_result = await db.execute(select(func.count(Comment.id)))
     total_comments = total_comments_result.scalar()
 
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_comments_result = await db.execute(
         select(func.count(Comment.id)).where(Comment.created_at >= today_start)
     )
