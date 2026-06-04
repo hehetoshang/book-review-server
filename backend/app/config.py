@@ -27,16 +27,9 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 如果 database_url 未设置，根据 database_type 生成默认值
+        # 如果 database_url 未设置（未安装状态），使用内存数据库，不创建文件
         if not self.database_url:
-            if self.database_type == "sqlite":
-                DATA_DIR.mkdir(exist_ok=True)
-                db_path = DATA_DIR / "chapter_comments.db"
-                self.database_url = f"sqlite+aiosqlite:///{db_path}"
-            elif self.database_type == "mysql":
-                self.database_url = "mysql+aiomysql://root:password@localhost:3306/chapter_comments"
-            elif self.database_type == "postgresql":
-                self.database_url = "postgresql+asyncpg://postgres:password@localhost:5432/chapter_comments"
+            self.database_url = "sqlite+aiosqlite:///:memory:"
 
     @property
     def jwt_expires_seconds(self) -> int:

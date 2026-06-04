@@ -280,6 +280,10 @@ const handleInstall = async () => {
         ...admin.value,
         databaseType: db.value.type,
         databaseUrl: buildDatabaseUrl(),
+        host: db.value.host,
+        port: db.value.port,
+        user: db.value.user,
+        password: db.value.password,
       },
     })
     if (res.err === 'ok' || res.data) {

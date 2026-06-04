@@ -4,10 +4,10 @@ import bcrypt
 from pathlib import Path
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import select, func
 
-from app.database import get_db
+from app.database import get_db, Base
 from app.models import User
 from app.config import settings, DATA_DIR
 from app.schemas import ApiResponse
@@ -91,22 +91,17 @@ async def test_database(body: dict):
 
 
 @router.post("/setup", response_model=ApiResponse[dict])
-async def setup(body: dict, db: AsyncSession = Depends(get_db)):
-    # Check if already setup
-    admin_result = await db.execute(
-        select(func.count(User.id)).where(User.role == "admin")
-    )
-    admin_count = admin_result.scalar()
-
-    if admin_count > 0:
-        return JSONResponse(status_code=400, content={"err": "error", "message": "系统已初始化"})
-
+async def setup(body: dict):
     email = body.get("email", "").strip().lower()
     username = body.get("username", "").strip().lower()
     nickname = body.get("nickname", "").strip()
     password = body.get("password", "")
     database_type = body.get("databaseType", "sqlite").strip().lower()
     database_url = body.get("databaseUrl", "")
+
+    # 检查是否已安装（通过 .env 文件或 flag 文件）
+    if os.path.exists(ENV_FILE):
+        return JSONResponse(status_code=400, content={"err": "error", "message": "系统已初始化，请先删除 .env 文件"})
 
     if not email or not username or not password:
         return JSONResponse(status_code=400, content={"err": "error", "message": "必填字段不能为空"})
@@ -117,23 +112,37 @@ async def setup(body: dict, db: AsyncSession = Depends(get_db)):
     if database_type not in DB_DRIVERS:
         return JSONResponse(status_code=400, content={"err": "error", "message": "不支持的数据库类型"})
 
-    # 如果使用 SQLite，确保数据目录存在（使用绝对路径）
+    # 构建数据库 URL
     if database_type == "sqlite":
         DATA_DIR.mkdir(exist_ok=True)
         database_url = f"sqlite+aiosqlite:///{DATA_DIR / 'chapter_comments.db'}"
+    elif database_type == "mysql":
+        database_url = f"mysql+aiomysql://{body.get('user', 'root')}:{body.get('password', '')}@{body.get('host', 'localhost')}:{body.get('port', 3306)}/{database_url.split('/')[-1] if '/' in database_url else 'chapter_comments'}"
+
+    # 在目标数据库中创建管理员用户
+    engine = create_async_engine(database_url, echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-    admin_user = User(
-        email=email,
-        username=username,
-        nickname=nickname or username,
-        password=hashed_password,
-        role="admin",
-        is_active=True,
-    )
-    db.add(admin_user)
-    await db.flush()
+    async with async_session() as session:
+        admin_user = User(
+            email=email,
+            username=username,
+            nickname=nickname or username,
+            password=hashed_password,
+            role="admin",
+            is_active=True,
+        )
+        session.add(admin_user)
+        await session.flush()
+        admin_id = admin_user.id
+        await session.commit()
+
+    await engine.dispose()
 
     # 生成 JWT Secret
     import secrets
@@ -155,7 +164,7 @@ async def setup(body: dict, db: AsyncSession = Depends(get_db)):
     return ApiResponse(
         data={
             "message": "初始化成功",
-            "admin_id": admin_user.id,
+            "admin_id": admin_id,
             "databaseType": database_type,
             "envFile": ENV_FILE,
         }
