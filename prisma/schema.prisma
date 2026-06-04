@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  username     String   @unique
+  nickname     String
+  avatar       String?
+  password     String   @default("")
+  role         String   @default("user")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  accessTime   DateTime?
+  lastRead     DateTime?
+  permission   String   @default("")
+  comments     Comment[] @relation("ReviewUser")
+  thirdParties ThirdPartyUser[] @relation("ThirdPartyInternalUser")
+
+  @@map("readers")
+}
+
+model App {
+  id          Int      @id @default(autoincrement())
+  appId       String   @unique
+  secret      String
+  name        String
+  domains     String   @default("")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  comments    Comment[] @relation("AppComments")
+  nonces      Nonce[]
+  thirdParties ThirdPartyUser[] @relation("ThirdPartyApp")
+
+  @@map("apps")
+}
+
+model ThirdPartyUser {
+  id             Int      @id @default(autoincrement())
+  appId          Int
+  app            App      @relation("ThirdPartyApp", fields: [appId], references: [id])
+  externalId     String
+  externalEmail  String?
+  externalNick   String?
+  internalUserId Int
+  internalUser   User     @relation("ThirdPartyInternalUser", fields: [internalUserId], references: [id])
+  lastLoginAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@unique([appId, externalId])
+  @@map("third_party_users")
+}
+
+model Nonce {
+  id        Int      @id @default(autoincrement())
+  appId     Int
+  app       App      @relation(fields: [appId], references: [id])
+  nonce     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([nonce])
+  @@map("nonces")
+}
+
+model ReviewBook {
+  id     Int     @id @default(autoincrement())
+  title  String  @default("")
+  alias  String  @default("")
+  
+  @@map("review_books")
+}
+
+model ReviewChapter {
+  id       Int     @id @default(autoincrement())
+  bookId   Int     @default(0)
+  title    String  @default("")
+  alias    String  @default("")
+  parents  String  @default("")
+
+  @@map("review_chapters")
+}
+
+model Comment {
+  id           Int      @id @default(autoincrement())
+  appId        Int      @default(0)
+  app          App?     @relation("AppComments", fields: [appId], references: [id])
+  bookId       Int      @default(0)
+  chapterId    Int      @default(0)
+  segmentId    Int      @default(0)
+  cfi          String   @default("")
+  cfiBase      String   @default("")
+  type         Int      @default(0)
+  level        Int      @default(0)
+  content      String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  geo          String   @default("")
+  userId       Int
+  user         User     @relation("ReviewUser", fields: [userId], references: [id])
+  rootId       Int?
+  quoteId      Int?
+  likeCount    Int      @default(0)
+  dislikeCount Int      @default(0)
+
+  @@index([appId, chapterId])
+  @@index([userId])
+  @@index([appId])
+  @@map("reviews")
+}
