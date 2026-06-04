@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: false },
 
   modules: [
     '@nuxt/content',
@@ -92,6 +92,11 @@ export default defineNuxtConfig({
         target: 'esnext',
       },
     },
+    // 避免在开发时使用 prerender 导致内存问题
+    prerender: {
+      concurrency: 1,
+      failOnError: false,
+    },
   },
 
   compatibilityDate: '2024-12-01',
@@ -102,9 +107,7 @@ export default defineNuxtConfig({
 
   content: {
     documentDriven: false,
-    highlight: {
-      theme: 'github-dark',
-    },
+    highlight: false, // 禁用代码高亮以避免 Node.js v24 崩溃问题
   },
 
   vite: {
