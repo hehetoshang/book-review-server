@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -7,17 +6,14 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import engine, Base
 
-SETUP_FLAG_FILE = ".setup_complete"
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.path.exists(SETUP_FLAG_FILE):
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # 无论是否已安装，都尝试创建表（幂等操作，表已存在则跳过）
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    if os.path.exists(SETUP_FLAG_FILE):
-        await engine.dispose()
+    await engine.dispose()
 
 
 app = FastAPI(
