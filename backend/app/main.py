@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,15 +7,17 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import engine, Base
 
+SETUP_FLAG_FILE = ".setup_complete"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create tables if they don't exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    if os.path.exists(SETUP_FLAG_FILE):
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
-    # Shutdown: dispose engine
-    await engine.dispose()
+    if os.path.exists(SETUP_FLAG_FILE):
+        await engine.dispose()
 
 
 app = FastAPI(

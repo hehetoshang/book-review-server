@@ -37,7 +37,7 @@
                 <v-item-group v-model="db.type" mandatory>
                   <v-row>
                     <v-col v-for="opt in dbTypes" :key="opt.value" cols="4">
-                      <v-item v-slot="{ isSelected, toggle }">
+                      <v-item v-slot="{ isSelected, toggle }" :value="opt.value">
                         <v-card
                           variant="outlined"
                           :class="{ 'selected-card': isSelected }"
