@@ -338,6 +338,25 @@ class TestReviewBookList(TestApp):
             db.commit()
 
 
+class TestReviewAddTruncate(TestWithUserLogin):
+    def test_refer_text_truncated(self):
+        long_refer = "字" * 200
+        body = json.dumps({
+            "book_id": 1, "chapter_name": "trunc-ut-chapter",
+            "segment_id": 0, "cfi": "", "content": "c",
+            "type": models.ReviewType.text, "refer_text": long_refer,
+        })
+        d = self.json("/api/review/add", method="POST", body=body,
+                      headers={"Content-Type": "application/json"})
+        self.assertEqual(d["err"], "ok")
+        self.assertEqual(len(d["data"]["referText"]), 80)
+        # 清理
+        db = get_db()
+        db.query(models.Review).filter(models.Review.id == d["data"]["reviewId"]).delete()
+        db.query(models.ReviewChapter).filter(models.ReviewChapter.title == "trunc-ut-chapter").delete()
+        db.commit()
+
+
 class TestJsonResponse(TestApp):
     def raise_(self, err):
         raise err

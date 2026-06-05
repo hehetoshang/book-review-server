@@ -11,6 +11,9 @@ from models import Review, ReviewBook, ReviewChapter, ReviewType
 from sqlalchemy import func, or_
 from utils import super_strip
 
+# 引用正文只用于「一行」展示，发表时截断，避免千万级数据下的存储膨胀
+REFER_TEXT_MAX = 80
+
 # reader在获取toc后，将toc传递给server，然后构建对应的结构表；
 # book_id -> [chapter_id] -> [segment_id]
 # 每个toc展平，自身名称作为chapter_id，名称
@@ -141,6 +144,8 @@ class ReviewAdd(BaseHandler):
         )
 
         review = Review(**data)
+        if review.refer_text:
+            review.refer_text = review.refer_text[:REFER_TEXT_MAX]
         review.level = n + 1
         review.chapter_id = chapter.id
         review.geo = self.request.remote_ip
