@@ -5,7 +5,7 @@ import bcrypt
 import re
 import logging
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship, declarative_base
 
 import loader
@@ -162,6 +162,15 @@ class ReviewChapter(Base):
 
 class Review(Base):
     __tablename__ = "reviews"
+    # 千万级数据下的读路径索引：
+    # - book/list 最新：按 book_id 过滤 + create_time 排序
+    # - book/list 热门：按 book_id 过滤 + like_count/create_time 排序
+    # - summary/list 段评：按 book_id + chapter_id(+segment_id) 过滤
+    __table_args__ = (
+        Index("ix_review_book_latest", "book_id", "create_time"),
+        Index("ix_review_book_hot", "book_id", "like_count", "create_time"),
+        Index("ix_review_segment", "book_id", "chapter_id", "segment_id"),
+    )
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, default=0)  # 书籍 ID
     chapter_id = Column(Integer, default=0)  # 章节 ID
@@ -172,6 +181,7 @@ class Review(Base):
     type = Column(Integer, default=0)  # ReviewType：文字、点赞、踩
     level = Column(Integer, default=0)  # 评论楼层
     content = Column(String(1024), default="")  # 评论内容
+    refer_text = Column(String(255), default="")  # 被评论的书籍正文片段（发表时截断为一行的量，省存储）
     create_time = Column(DateTime)
     update_time = Column(DateTime)
     geo = Column(String(255), default="")
@@ -211,10 +221,14 @@ class Review(Base):
         d["bookId"] = row.book_id
         d["chapterId"] = row.chapter_id
         d["content"] = row.content
+        d["referText"] = row.refer_text
+        d["cfi"] = row.cfi
         d["segmentId"] = row.segment_id
         d["type"] = row.type
         d["geo"] = row.geo
         d["level"] = row.level
+        d["likeCount"] = row.like_count
+        d["dislikeCount"] = row.dislike_count
         d["createTime"] = row.create_time.strftime("%Y-%m-%d %H:%M:%S")
         d["updateTime"] = row.update_time.strftime("%Y-%m-%d %H:%M:%S")
         d["userId"] = row.user.id
