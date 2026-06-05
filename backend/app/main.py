@@ -12,12 +12,11 @@ SETUP_FLAG_FILE = ".setup_complete"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.path.exists(SETUP_FLAG_FILE):
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Always create tables on startup - create_all is safe and won't overwrite existing tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    if os.path.exists(SETUP_FLAG_FILE):
-        await engine.dispose()
+    await engine.dispose()
 
 
 app = FastAPI(
