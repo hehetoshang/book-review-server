@@ -9,7 +9,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.database import Base
-from app.models import User
+from app.models import User, App
 from app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/install", tags=["install"])
@@ -168,6 +168,21 @@ async def setup(body: dict):
                 await session.flush()
                 admin_id = admin_user.id
 
+                # 创建默认应用
+                app_id_str = f"app_{secrets.token_hex(4)}"
+                app_secret = secrets.token_hex(16)
+                site_name = str(body.get("siteName", "默认应用")).strip() or "默认应用"
+                
+                default_app = App(
+                    app_id=app_id_str,
+                    secret=app_secret,
+                    name=site_name,
+                    domains="",
+                    is_active=True,
+                )
+                session.add(default_app)
+                await session.flush()
+
         # 生成 JWT Secret
         jwt_secret = secrets.token_urlsafe(32)
 
@@ -188,6 +203,7 @@ async def setup(body: dict):
             data={
                 "message": "初始化成功",
                 "admin_id": admin_id,
+                "appId": app_id_str,
                 "databaseType": database_type,
                 "envFile": ENV_FILE,
             }
