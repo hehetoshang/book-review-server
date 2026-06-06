@@ -9,7 +9,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.database import Base
-from app.models import User
+from app.models import User, App
 from app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/install", tags=["install"])
@@ -45,8 +45,8 @@ CORS_ORIGINS="*"
 @router.get("/status", response_model=ApiResponse[dict])
 async def get_setup_status():
     if os.path.exists(SETUP_FLAG_FILE):
-        return ApiResponse(data={"is_setup": True})
-    return ApiResponse(data={"is_setup": False})
+        return ApiResponse(data={"isInstalled": True, "is_setup": True})
+    return ApiResponse(data={"isInstalled": False, "is_setup": False})
 
 
 def _build_db_url(db_type: str, host: str, port: int, user: str, password: str, database: str) -> str:
@@ -168,6 +168,21 @@ async def setup(body: dict):
                 await session.flush()
                 admin_id = admin_user.id
 
+                # 创建默认应用
+                app_id_str = f"app_{secrets.token_hex(4)}"
+                app_secret = secrets.token_hex(16)
+                site_name = str(body.get("siteName", "默认应用")).strip() or "默认应用"
+                
+                default_app = App(
+                    app_id=app_id_str,
+                    secret=app_secret,
+                    name=site_name,
+                    domains="",
+                    is_active=True,
+                )
+                session.add(default_app)
+                await session.flush()
+
         # 生成 JWT Secret
         jwt_secret = secrets.token_urlsafe(32)
 
@@ -188,6 +203,7 @@ async def setup(body: dict):
             data={
                 "message": "初始化成功",
                 "admin_id": admin_id,
+                "appId": app_id_str,
                 "databaseType": database_type,
                 "envFile": ENV_FILE,
             }

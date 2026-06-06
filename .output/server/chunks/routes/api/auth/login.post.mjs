@@ -29,18 +29,23 @@ import '@prisma/client';
 
 const login_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { email, password } = body;
-  if (!email || !password) {
-    throw createError({ statusCode: 400, statusMessage: "\u90AE\u7BB1\u548C\u5BC6\u7801\u4E0D\u80FD\u4E3A\u7A7A" });
+  const { account, password } = body;
+  if (!account || !password) {
+    throw createError({ statusCode: 400, statusMessage: "\u8D26\u53F7\u548C\u5BC6\u7801\u4E0D\u80FD\u4E3A\u7A7A" });
   }
   const prisma = getPrisma();
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  let user = null;
+  if (account.includes("@")) {
+    user = await prisma.user.findUnique({ where: { email: account.trim().toLowerCase() } });
+  } else {
+    user = await prisma.user.findUnique({ where: { username: account.trim().toLowerCase() } });
+  }
   if (!user) {
-    throw createError({ statusCode: 401, statusMessage: "\u90AE\u7BB1\u6216\u5BC6\u7801\u9519\u8BEF" });
+    throw createError({ statusCode: 401, statusMessage: "\u8D26\u53F7\u6216\u5BC6\u7801\u9519\u8BEF" });
   }
   const validPassword = await bcrypt.compare(password, user.password);
   if (!validPassword) {
-    throw createError({ statusCode: 401, statusMessage: "\u90AE\u7BB1\u6216\u5BC6\u7801\u9519\u8BEF" });
+    throw createError({ statusCode: 401, statusMessage: "\u8D26\u53F7\u6216\u5BC6\u7801\u9519\u8BEF" });
   }
   if (!user.isActive) {
     throw createError({ statusCode: 403, statusMessage: "\u8D26\u6237\u5DF2\u88AB\u7981\u7528" });
@@ -68,6 +73,7 @@ const login_post = defineEventHandler(async (event) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         nickname: user.nickname,
         role: user.role,
         avatar: user.avatar
