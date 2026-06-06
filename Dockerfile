@@ -10,6 +10,9 @@ ARG GIT_VERSION=""
 LABEL CODE_VERSION=$GIT_VERSION
 
 WORKDIR /app/
+COPY requirements.txt /app/
+RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages || pip3 install --no-cache-dir -r requirements.txt
+
 COPY . /app/
 
 EXPOSE 80/tcp

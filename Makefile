@@ -14,12 +14,10 @@ lint:
 	flake8 . --count --statistics --config .style.yapf
 
 up:
-	USER_DATABASE="sqlite:////tmp/brs.db" python3 main.py --syncdb
-	USER_DATABASE="sqlite:////tmp/brs.db" python3 main.py --port=5002 --host=0.0.0.0 --logging=debug --log-file-prefix=/tmp/brs.log
+	USER_DATABASE="sqlite:////tmp/brs.db" python3 run.py
 
 debug:
-	python3 main.py --syncdb
-	python3 main.py --port=5002 --host=0.0.0.0 --logging=debug
+	python3 run.py
 
 docker: Dockerfile
 	docker build --network=host --build-arg GIT_VERSION=$(VERSION) -t $(LATEST) .
