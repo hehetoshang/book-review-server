@@ -45,8 +45,8 @@ export default defineEventHandler(async (event) => {
     data: {
       list: comments.map((c) => ({
         id: c.id,
-        appId: c.app.appId,
-        appName: c.app.name,
+        appId: c.app?.appId || '',
+        appName: c.app?.name || '',
         bookId: c.bookId,
         bookTitle: c.bookTitle,
         chapterId: c.chapterId,

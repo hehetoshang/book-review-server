@@ -5,11 +5,11 @@ from sqlalchemy import select, func
 from datetime import datetime, timezone
 
 from app.database import get_db
-from app.models import User, App, Comment, ThirdPartyUser
+from app.models import User, App, Comment, ThirdPartyUser, Nonce
 from app.dependencies import get_current_user, CurrentUser
 from app.utils.jwt import create_access_token, decode_access_token
 from app.utils.sanitize import sanitize_html
-from app.utils.proxy_auth import verify_proxy_signature
+from app.utils.proxy_auth import verify_proxy_token
 from app.config import settings
 from app.schemas import ApiResponse
 
@@ -47,7 +47,9 @@ async def get_comments(
     total = total_result.scalar() or 0
     total_pages = (total + limit - 1) // limit if total else 0
 
-    query = query.order_by(Comment.created_at.asc()).offset(offset).limit(limit)
+    from sqlalchemy.orm import joinedload
+    query = query.options(joinedload(Comment.user))
+    query = query.order_by(Comment.created_at.desc()).offset(offset).limit(limit)
     comments_result = await db.execute(query)
     comments = comments_result.scalars().all()
 
@@ -57,7 +59,9 @@ async def get_comments(
                 {
                     "id": comment.id,
                     "bookId": comment.book_id,
+                    "bookTitle": comment.book_title,
                     "chapterId": comment.chapter_id,
+                    "chapterName": comment.chapter_name,
                     "segmentId": comment.segment_id,
                     "cfi": comment.cfi,
                     "cfiBase": comment.cfi_base,
@@ -66,6 +70,8 @@ async def get_comments(
                     "content": comment.content,
                     "createdAt": comment.created_at.isoformat() if comment.created_at else "",
                     "userId": comment.user_id,
+                    "nickname": comment.user.nickname if comment.user else "",
+                    "avatar": comment.user.avatar if comment.user else "",
                     "rootId": comment.root_id,
                     "quoteId": comment.quote_id,
                     "likeCount": comment.like_count,
@@ -86,7 +92,9 @@ async def create_comment(
     app_id = body.get("appId", "").strip()
     token = body.get("token", "").strip()
     book_id = body.get("bookId", 0)
+    book_title = str(body.get("bookTitle", "")).strip()
     chapter_id = body.get("chapterId", 0)
+    chapter_name = str(body.get("chapterName", "")).strip()
     segment_id = body.get("segmentId", 0)
     cfi = body.get("cfi", "").strip()
     cfi_base = body.get("cfiBase", "").strip()
@@ -125,7 +133,9 @@ async def create_comment(
     new_comment = Comment(
         app_id=app.id,
         book_id=book_id,
+        book_title=book_title,
         chapter_id=chapter_id,
+        chapter_name=chapter_name,
         segment_id=segment_id,
         cfi=cfi,
         cfi_base=cfi_base,
@@ -155,14 +165,12 @@ async def proxy_login(
     db: AsyncSession = Depends(get_db),
 ):
     app_id = body.get("appId", "").strip()
+    proxy_token = body.get("proxyToken", "").strip()
     external_id = body.get("externalId", "").strip()
     external_email = body.get("externalEmail", "").strip()
     external_nick = body.get("externalNick", "").strip()
-    timestamp = body.get("timestamp", "").strip()
-    nonce = body.get("nonce", "").strip()
-    signature = body.get("signature", "").strip()
 
-    if not app_id or not external_id or not signature:
+    if not app_id or not proxy_token or not external_id:
         return JSONResponse(status_code=400, content={"err": "error", "statusMessage": "必填字段不能为空"})
 
     app_result = await db.execute(select(App).where(App.app_id == app_id))
@@ -171,15 +179,30 @@ async def proxy_login(
     if not app or not app.is_active:
         return JSONResponse(status_code=404, content={"err": "error", "statusMessage": "应用不存在或已禁用"})
 
-    if not verify_proxy_signature(app_id, timestamp, nonce, signature, app.secret):
-        return JSONResponse(status_code=401, content={"err": "error", "statusMessage": "签名验证失败"})
+    payload = verify_proxy_token(app.secret, proxy_token)
+    if not payload:
+        return JSONResponse(status_code=401, content={"err": "error", "statusMessage": "代理令牌无效或已过期"})
 
-    try:
-        ts = int(timestamp)
-        if abs(datetime.now(timezone.utc).timestamp() - ts) > 300:
-            return JSONResponse(status_code=401, content={"err": "error", "statusMessage": "请求已过期"})
-    except ValueError:
-        return JSONResponse(status_code=400, content={"err": "error", "statusMessage": "时间戳格式错误"})
+    nonce_val = payload.get("nonce")
+    if not nonce_val:
+        return JSONResponse(status_code=400, content={"err": "error", "statusMessage": "缺少nonce"})
+
+    # Check nonce for replay protection
+    nonce_result = await db.execute(select(Nonce).where(Nonce.nonce == nonce_val))
+    if nonce_result.scalar_one_or_none():
+        return JSONResponse(status_code=400, content={"err": "error", "statusMessage": "nonce已被使用"})
+
+    # Store nonce with expiry
+    ttl = int(settings.get("PROXY_TOKEN_TTL", 300))
+    expires_at = datetime.fromtimestamp(datetime.now(timezone.utc).timestamp() + ttl, tz=timezone.utc)
+    
+    new_nonce = Nonce(
+        app_id=app.id,
+        nonce=nonce_val,
+        expires_at=expires_at.replace(tzinfo=None)
+    )
+    db.add(new_nonce)
+    await db.flush()
 
     tp_result = await db.execute(
         select(ThirdPartyUser).where(
@@ -191,21 +214,29 @@ async def proxy_login(
 
     if tp_user:
         internal_user_id = tp_user.internal_user_id
-        tp_user.last_login_at = datetime.now(timezone.utc)
+        tp_user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.flush()
     else:
+        import bcrypt
+        import random
+        import string
+        
         username = external_id.lower()
-        email = external_email or f"{external_id}@proxy.local"
+        email = external_email or f"{external_id}@proxy.{app.app_id}.local"
 
         user_result = await db.execute(select(User).where(User.username == username))
         user = user_result.scalar_one_or_none()
 
         if not user:
+            # Generate random password
+            rand_pwd = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+            hashed_pwd = bcrypt.hashpw(rand_pwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
             user = User(
                 email=email,
                 username=username,
                 nickname=external_nick or external_id,
-                password="",
+                password=hashed_pwd,
                 role="user",
                 is_active=True,
             )
