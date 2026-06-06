@@ -24,14 +24,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     try {
       const res: any = await $fetch('/api/install/status')
-      if (res.data && !res.data.isInstalled) {
+      if (res.err === 'ok' && res.data && !res.data.isInstalled) {
         return navigateTo('/install')
-      } else if (res.data?.isInstalled) {
+      } else if (res.err === 'ok' && res.data?.isInstalled) {
         // Cache the installed status
         localStorage.setItem('platform_installed', 'true')
       }
-    } catch {
-      // If check fails, allow navigation
+    } catch (err) {
+      // If check fails, allow navigation (don't block user)
+      console.error('Install status check failed:', err)
     }
   }
 })

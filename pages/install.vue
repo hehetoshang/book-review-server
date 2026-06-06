@@ -64,62 +64,62 @@
 
               <!-- MySQL Config -->
               <div v-if="db.type === 'mysql'">
-                <v-alert type="info" variant="tonal" class="mb-4">
+                <v-alert type="warning" variant="tonal" class="mb-4">
                   <template #title>MySQL 数据库配置</template>
-                  请确保数据库已创建，并填写连接信息。
+                  当前版本仅支持 SQLite 数据库。如需使用 MySQL 或 PostgreSQL，请部署后端服务后使用 REST API 进行安装。
                 </v-alert>
 
                 <v-row>
                   <v-col cols="8">
-                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                   <v-col cols="4">
-                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="3306" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="3306" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="6">
-                    <v-text-field v-model="db.user" label="用户名" placeholder="root" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model="db.user" label="用户名" placeholder="root" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                   <v-col cols="6">
-                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" />
+                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" :disabled="true" />
                   </v-col>
                 </v-row>
-                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" />
+                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
               </div>
 
               <!-- PostgreSQL Config -->
               <div v-if="db.type === 'postgresql'">
-                <v-alert type="info" variant="tonal" class="mb-4">
+                <v-alert type="warning" variant="tonal" class="mb-4">
                   <template #title>PostgreSQL 数据库配置</template>
-                  请确保数据库已创建，并填写连接信息。
+                  当前版本仅支持 SQLite 数据库。如需使用 MySQL 或 PostgreSQL，请部署后端服务后使用 REST API 进行安装。
                 </v-alert>
 
                 <v-row>
                   <v-col cols="8">
-                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model="db.host" label="数据库主机" placeholder="localhost" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                   <v-col cols="4">
-                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="5432" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model.number="db.port" label="端口" type="number" placeholder="5432" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="6">
-                    <v-text-field v-model="db.user" label="用户名" placeholder="postgres" variant="outlined" :rules="[v => !!v || '必填']" />
+                    <v-text-field v-model="db.user" label="用户名" placeholder="postgres" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
                   </v-col>
                   <v-col cols="6">
-                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" />
+                    <v-text-field v-model="db.password" label="密码" type="password" placeholder="数据库密码" variant="outlined" :disabled="true" />
                   </v-col>
                 </v-row>
-                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" />
+                <v-text-field v-model="db.database" label="数据库名称" placeholder="chapter_comments" variant="outlined" :rules="[v => !!v || '必填']" :disabled="true" />
               </div>
 
-              <!-- Test Connection Button (only for MySQL/PostgreSQL) -->
-              <v-btn v-if="db.type !== 'sqlite'" color="info" variant="tonal" :loading="testingDb" @click="testDb" class="mb-2">
+              <!-- Test Connection Button (only for SQLite, auto-tested) -->
+              <v-btn v-if="db.type === 'sqlite'" color="info" variant="tonal" :loading="testingDb" @click="testDb" class="mb-2">
                 <v-icon start icon="mdi-database-check" /> 测试连接
               </v-btn>
               <div v-if="dbConnected" class="text-success text-caption mb-2">
-                <v-icon size="small" icon="mdi-check-circle" class="mr-1" /> 数据库连接成功
+                <v-icon size="small" icon="mdi-check-circle" class="mr-1" /> 数据库连接就绪
               </div>
             </v-form>
           </div>
@@ -186,8 +186,8 @@ const appId = ref('')
 // Database type options
 const dbTypes = [
   { value: 'sqlite', label: 'SQLite', desc: '轻量级，免配置', icon: 'mdi-database' },
-  { value: 'mysql', label: 'MySQL', desc: '高性能，常用', icon: 'mdi-database-outline' },
-  { value: 'postgresql', label: 'PostgreSQL', desc: '企业级，功能强大', icon: 'mdi-database-sync' },
+  { value: 'mysql', label: 'MySQL', desc: '需要后端服务', icon: 'mdi-database-outline' },
+  { value: 'postgresql', label: 'PostgreSQL', desc: '需要后端服务', icon: 'mdi-database-sync' },
 ]
 
 // SQLite 固定路径
@@ -213,7 +213,7 @@ const usernameRules = [
 
 const canProceed = computed(() => {
   if (step.value === 1) {
-    // SQLite 不需要测试连接，直接可用
+    // SQLite 自动可用，其他类型需要测试连接
     if (db.value.type === 'sqlite') return true
     return dbConnected.value
   }
@@ -237,6 +237,7 @@ const envConfig = computed(() => {
 const testDb = async () => {
   testingDb.value = true
   error.value = ''
+  successMsg.value = ''
   try {
     const res: any = await $fetch('/api/install/test-db', {
       method: 'POST',
@@ -251,12 +252,12 @@ const testDb = async () => {
     })
     if (res.err === 'ok') {
       dbConnected.value = true
-      successMsg.value = '数据库连接成功'
+      successMsg.value = '数据库连接就绪'
     } else {
-      throw new Error(res.message || '连接失败')
+      error.value = res.message || '连接失败'
     }
   } catch (e: any) {
-    error.value = e.data?.message || e.message || '连接失败'
+    error.value = e.statusMessage || e.data?.message || e.message || '连接失败'
   } finally {
     testingDb.value = false
   }
@@ -282,16 +283,18 @@ const handleInstall = async () => {
         databaseUrl: buildDatabaseUrl(),
       },
     })
-    if (res.err === 'ok' || res.data) {
+    if (res.err === 'ok') {
       appId.value = res.data?.app?.appId || res.data?.appId || ''
       step.value = 3
-      // Mark installed
+      // 标记安装完成，使用 localStorage 与中间件保持一致
       if (import.meta.client) {
-        sessionStorage.setItem('install_done', 'true')
+        localStorage.setItem('platform_installed', 'true')
       }
+    } else {
+      error.value = res.message || '安装失败'
     }
   } catch (e: any) {
-    error.value = e.data?.statusMessage || e.data?.message || e.message || '安装失败'
+    error.value = e.statusMessage || e.data?.message || e.message || '安装失败'
   } finally {
     installing.value = false
   }
@@ -318,12 +321,13 @@ const copyEnv = () => {
 const goToHome = () => navigateTo('/')
 
 onMounted(() => {
-  // If SQLite, auto-approve
+  // SQLite 自动可用
   if (db.value.type === 'sqlite') {
     dbConnected.value = true
   }
-  
-  if (import.meta.client && sessionStorage.getItem('install_done')) {
+
+  // 如果已安装，重定向到首页（使用 localStorage 与中间件保持一致）
+  if (import.meta.client && localStorage.getItem('platform_installed')) {
     navigateTo('/', { redirectCode: 302 })
   }
 })
