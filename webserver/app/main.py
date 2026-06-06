@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
-from app.config import settings
-from app.database import engine, Base
-from app.routers.install import SETUP_FLAG_FILE
+from webserver.app.config import settings
+from webserver.app.database import engine, Base
+from webserver.app.routers.install import SETUP_FLAG_FILE
 
 
 @asynccontextmanager
@@ -61,7 +61,7 @@ app.add_middleware(
 )
 
 # Include routers
-from app.routers import auth, admin, platform, user, install
+from webserver.app.routers import auth, admin, platform, user, install
 
 app.include_router(auth.router)
 app.include_router(admin.router)

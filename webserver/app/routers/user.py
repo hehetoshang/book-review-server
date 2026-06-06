@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from app.database import get_db
-from app.models import Comment
-from app.dependencies import get_current_user, CurrentUser
-from app.schemas import ApiResponse
+from webserver.app.database import get_db
+from webserver.app.models import Comment
+from webserver.app.dependencies import get_current_user, CurrentUser
+from webserver.app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 

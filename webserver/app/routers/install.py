@@ -8,9 +8,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from app.database import Base
-from app.models import User, App
-from app.schemas import ApiResponse
+from webserver.app.database import Base
+from webserver.app.models import User, App
+from webserver.app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/install", tags=["install"])
 

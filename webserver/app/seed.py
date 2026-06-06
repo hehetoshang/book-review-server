@@ -5,8 +5,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from passlib.context import CryptContext
-from app.database import engine, Base, async_session_factory
-from app.models import User, App, ReviewBook, ReviewChapter
+from webserver.app.database import engine, Base, async_session_factory
+from webserver.app.models import User, App, ReviewBook, ReviewChapter
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

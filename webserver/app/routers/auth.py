@@ -4,12 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import bcrypt
 
-from app.database import get_db
-from app.models import User
-from app.schemas import LoginResponse, UserResponse, ApiResponse
-from app.dependencies import get_current_user, CurrentUser
-from app.utils.jwt import create_access_token
-from app.config import settings
+from webserver.app.database import get_db
+from webserver.app.models import User
+from webserver.app.schemas import LoginResponse, UserResponse, ApiResponse
+from webserver.app.dependencies import get_current_user, CurrentUser
+from webserver.app.utils.jwt import create_access_token
+from webserver.app.config import settings
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])

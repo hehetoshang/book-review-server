@@ -2,8 +2,8 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
-from app.database import Base
-from app.config import settings
+from webserver.app.database import Base
+from webserver.app.config import settings
 
 config = context.config
 

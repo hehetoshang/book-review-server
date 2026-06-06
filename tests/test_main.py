@@ -16,8 +16,8 @@ import hashlib
 import pytest
 import pytest_asyncio
 
-# 确保 backend 目录在 sys.path 中
-_backend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backend")
+# 确保 workspace 目录在 sys.path 中
+_backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _backend_dir)
 
 # ============================================================
@@ -361,7 +361,7 @@ class TestAdmin:
     @pytest.mark.asyncio
     async def test_delete_comment(self, client, admin_user, test_app, normal_user):
         """测试删除评论"""
-        from app.utils.jwt import create_access_token
+        from webserver.app.utils.jwt import create_access_token
 
         token = await self._get_admin_token(client, admin_user)
 
@@ -431,7 +431,7 @@ class TestPlatform:
     @pytest.mark.asyncio
     async def test_create_comment(self, client, test_app, normal_user):
         """测试创建评论"""
-        from app.utils.jwt import create_access_token
+        from webserver.app.utils.jwt import create_access_token
 
         user_token = create_access_token(
             data={"userId": normal_user["id"], "email": normal_user["email"], "role": "user"}
@@ -488,7 +488,7 @@ class TestPlatform:
     @pytest.mark.asyncio
     async def test_create_and_query_comments(self, client, test_app, normal_user):
         """测试创建评论后查询"""
-        from app.utils.jwt import create_access_token
+        from webserver.app.utils.jwt import create_access_token
 
         user_token = create_access_token(
             data={"userId": normal_user["id"], "email": normal_user["email"], "role": "user"}
@@ -654,7 +654,7 @@ class TestUser:
     @pytest.mark.asyncio
     async def test_get_my_comments(self, client, normal_user, test_app):
         """测试获取我的评论列表"""
-        from app.utils.jwt import create_access_token
+        from webserver.app.utils.jwt import create_access_token
 
         # 先登录
         resp = await client.post(

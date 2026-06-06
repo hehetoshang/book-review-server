@@ -4,14 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime, timezone
 
-from app.database import get_db
-from app.models import User, App, Comment, ThirdPartyUser, Nonce
-from app.dependencies import get_current_user, CurrentUser
-from app.utils.jwt import create_access_token, decode_access_token
-from app.utils.sanitize import sanitize_html
-from app.utils.proxy_auth import verify_proxy_token
-from app.config import settings
-from app.schemas import ApiResponse
+from webserver.app.database import get_db
+from webserver.app.models import User, App, Comment, ThirdPartyUser, Nonce
+from webserver.app.dependencies import get_current_user, CurrentUser
+from webserver.app.utils.jwt import create_access_token, decode_access_token
+from webserver.app.utils.sanitize import sanitize_html
+from webserver.app.utils.proxy_auth import verify_proxy_token
+from webserver.app.config import settings
+from webserver.app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/platform", tags=["platform"])
 

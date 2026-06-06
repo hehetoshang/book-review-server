@@ -5,10 +5,10 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 import secrets
 
-from app.database import get_db
-from app.models import User, App, Comment
-from app.dependencies import require_admin
-from app.schemas import ApiResponse
+from webserver.app.database import get_db
+from webserver.app.models import User, App, Comment
+from webserver.app.dependencies import require_admin
+from webserver.app.schemas import ApiResponse
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
