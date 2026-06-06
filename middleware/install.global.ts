@@ -1,9 +1,4 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip install page itself
-  if (to.path === '/install') {
-    return
-  }
-
   // Skip API routes and static files
   if (to.path.startsWith('/api/') || to.path.startsWith('/_nuxt/') || to.path.startsWith('/sdk.js')) {
     return
@@ -19,16 +14,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // Check localStorage cache first to prevent unnecessary API calls
     const cachedStatus = localStorage.getItem('platform_installed')
     if (cachedStatus === 'true') {
+      if (to.path === '/install') {
+        return navigateTo('/')
+      }
       return // Already installed, proceed normally
     }
 
     try {
       const res: any = await $fetch('/api/install/status')
       if (res.err === 'ok' && res.data && !res.data.isInstalled) {
-        return navigateTo('/install')
+        if (to.path !== '/install') {
+          return navigateTo('/install')
+        }
       } else if (res.err === 'ok' && res.data?.isInstalled) {
         // Cache the installed status
         localStorage.setItem('platform_installed', 'true')
+        if (to.path === '/install') {
+          return navigateTo('/')
+        }
       }
     } catch (err) {
       // If check fails, allow navigation (don't block user)

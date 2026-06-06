@@ -15,26 +15,12 @@ export default defineEventHandler(async () => {
     }
   }
 
-  // 其次检查数据库中是否有管理员
-  try {
-    const prisma = getPrisma()
-    const adminCount = await prisma.user.count({
-      where: { role: 'admin' },
-    })
-
-    return {
-      err: 'ok',
-      data: {
-        isInstalled: adminCount > 0,
-      },
-    }
-  } catch {
-    // DB 连接失败 = 未安装
-    return {
-      err: 'ok',
-      data: {
-        isInstalled: false,
-      },
-    }
+  // 避免在还没选择数据库或未安装时自动创建 SQLite 数据库文件
+  // 如果没有安装标志，为了安全起见直接认为未安装
+  return {
+    err: 'ok',
+    data: {
+      isInstalled: false,
+    },
   }
 })

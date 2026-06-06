@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -5,13 +6,18 @@ from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.database import engine, Base
+from app.routers.install import SETUP_FLAG_FILE
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 无论是否已安装，都尝试创建表（幂等操作，表已存在则跳过）
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # 只有在已安装的情况下，才尝试创建表，避免在安装前自动生成 SQLite db
+    if os.path.exists(SETUP_FLAG_FILE):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception:
+            pass
     yield
     await engine.dispose()
 
@@ -21,6 +27,29 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+@app.middleware("http")
+async def check_install_middleware(request: Request, call_next):
+    # 允许的路径，不需要检查安装状态
+    allowed_paths = [
+        "/api/install/status",
+        "/api/install/setup",
+        "/api/install/test-db",
+        "/health",
+        "/docs",
+        "/openapi.json"
+    ]
+    
+    path = request.url.path
+    if path.startswith("/api/") and path not in allowed_paths:
+        if not os.path.exists(SETUP_FLAG_FILE):
+            return JSONResponse(
+                status_code=403,
+                content={"err": "error", "message": "System not installed"}
+            )
+            
+    response = await call_next(request)
+    return response
 
 # CORS middleware
 app.add_middleware(
