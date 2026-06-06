@@ -128,7 +128,7 @@
                 <span class="cc-nickname">{{ comment.nickname }}</span>
                 <span class="cc-time">{{ formatTime(comment.createdAt) }}</span>
               </div>
-              <div class="cc-comment-content">{{ comment.content }}</div>
+              <div class="cc-comment-content" v-html="sanitizeContent(comment.content)"></div>
             </div>
           </div>
 
@@ -150,7 +150,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import DOMPurify from 'dompurify'
 
 // Get URL params
 const route = useRoute()
@@ -246,7 +247,7 @@ const handleLogin = async () => {
       await loadComments()
     }
   } catch (e: any) {
-    authError.value = e.data?.statusMessage || '登录失败'
+    authError.value = e.data?.statusMessage || e.data?.message || '登录失败'
   } finally {
     authLoading.value = false
   }
@@ -270,7 +271,7 @@ const handleRegister = async () => {
       authTab.value = 'login'
     }
   } catch (e: any) {
-    authError.value = e.data?.statusMessage || '注册失败'
+    authError.value = e.data?.statusMessage || e.data?.message || '注册失败'
   } finally {
     authLoading.value = false
   }
@@ -298,7 +299,7 @@ const handlePostComment = async () => {
     await loadComments()
     updateHeight()
   } catch (e: any) {
-    postError.value = e.data?.statusMessage || '发表失败'
+    postError.value = e.data?.statusMessage || e.data?.message || '发表失败'
   } finally {
     posting.value = false
   }
@@ -373,6 +374,13 @@ const formatTime = (date: string | Date) => {
   if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
   return d.toLocaleDateString(lang)
+}
+
+const sanitizeContent = (html: string) => {
+  if (import.meta.client) {
+    return DOMPurify.sanitize(html)
+  }
+  return html // Server-side rendering will just pass it, assuming backend sanitized it
 }
 
 // Lifecycle

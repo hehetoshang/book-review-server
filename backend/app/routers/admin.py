@@ -318,7 +318,7 @@ async def get_comments(
     total = total_result.scalar()
 
     comments_result = await db.execute(
-        select(Comment).options(selectinload(Comment.user)).order_by(Comment.created_at.desc()).offset(offset).limit(limit)
+        select(Comment).options(selectinload(Comment.user), selectinload(Comment.app)).order_by(Comment.created_at.desc()).offset(offset).limit(limit)
     )
     comments = comments_result.scalars().all()
 
@@ -328,8 +328,11 @@ async def get_comments(
                 {
                     "id": comment.id,
                     "appId": comment.app_id,
+                    "appName": comment.app.name if comment.app else "",
                     "bookId": comment.book_id,
+                    "bookTitle": comment.book_title,
                     "chapterId": comment.chapter_id,
+                    "chapterName": comment.chapter_name,
                     "content": comment.content,
                     "createdAt": comment.created_at.isoformat() if comment.created_at else "",
                     "userId": comment.user_id,

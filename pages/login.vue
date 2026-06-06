@@ -84,7 +84,7 @@ const handleLogin = async () => {
       navigateTo('/dashboard')
     }
   } catch (e: any) {
-    error.value = e.data?.statusMessage || '登录失败'
+    error.value = e.data?.statusMessage || e.data?.message || '登录失败'
   } finally {
     loading.value = false
   }
