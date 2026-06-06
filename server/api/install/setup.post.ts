@@ -1,6 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { getPrisma } from '~/server/utils/db'
@@ -34,14 +33,9 @@ export default defineEventHandler(async (event) => {
   const prisma = getPrisma()
 
   // 检查数据库中是否已有管理员
-  let adminCount = 0
-  try {
-    adminCount = await prisma.user.count({
-      where: { role: 'admin' },
-    })
-  } catch (e) {
-    // 表可能还不存在，正常情况
-  }
+  const adminCount = await prisma.user.count({
+    where: { role: 'admin' },
+  })
 
   if (adminCount > 0) {
     throw createError({ statusCode: 400, statusMessage: '系统已安装，无法重复安装' })
@@ -74,14 +68,6 @@ export default defineEventHandler(async (event) => {
     const dataDir = path.resolve('data')
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true })
-    }
-
-    // 初始化数据库表结构
-    try {
-      execSync('npx prisma db push --accept-data-loss', { stdio: 'pipe' })
-    } catch (err: any) {
-      console.error('Prisma push error:', err.message)
-      throw createError({ statusCode: 500, statusMessage: '初始化数据库表结构失败' })
     }
 
     // 创建管理员账户

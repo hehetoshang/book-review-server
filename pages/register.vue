@@ -117,7 +117,7 @@ const handleRegister = async () => {
       navigateTo('/login?registered=1')
     }
   } catch (e: any) {
-    error.value = e.data?.statusMessage || e.data?.message || '注册失败'
+    error.value = e.data?.statusMessage || '注册失败'
   } finally {
     loading.value = false
   }

@@ -1,6 +1,4 @@
 import { d as defineEventHandler, a as getPrisma } from '../../../nitro/nitro.mjs';
-import fs from 'fs';
-import path from 'path';
 import 'unified';
 import 'remark-parse';
 import 'remark-rehype';
@@ -28,35 +26,20 @@ import 'node:url';
 import 'jsonwebtoken';
 import '@prisma/client';
 
-const SETUP_FLAG_FILE = path.resolve(".setup_complete");
 const status_get = defineEventHandler(async () => {
-  if (fs.existsSync(SETUP_FLAG_FILE)) {
-    return {
-      err: "ok",
-      data: {
-        isInstalled: true
-      }
-    };
-  }
-  try {
-    const prisma = getPrisma();
-    const adminCount = await prisma.user.count({
-      where: { role: "admin" }
-    });
-    return {
-      err: "ok",
-      data: {
-        isInstalled: adminCount > 0
-      }
-    };
-  } catch {
-    return {
-      err: "ok",
-      data: {
-        isInstalled: false
-      }
-    };
-  }
+  const prisma = getPrisma();
+  const adminCount = await prisma.user.count({
+    where: { role: "admin" }
+  });
+  const appCount = await prisma.app.count();
+  const isInstalled = adminCount > 0;
+  return {
+    err: "ok",
+    data: {
+      isInstalled,
+      hasApps: appCount > 0
+    }
+  };
 });
 
 export { status_get as default };

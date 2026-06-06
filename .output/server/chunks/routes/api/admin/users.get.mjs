@@ -31,8 +31,8 @@ const users_get = defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650" });
   }
   const query = getQuery(event);
-  const page = Math.max(1, parseInt(query.page, 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 20));
+  const page = parseInt(query.page) || 1;
+  const limit = Math.min(parseInt(query.limit) || 20, 100);
   const skip = (page - 1) * limit;
   const search = query.search;
   const prisma = getPrisma();
