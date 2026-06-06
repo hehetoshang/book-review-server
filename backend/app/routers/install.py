@@ -45,8 +45,8 @@ CORS_ORIGINS="*"
 @router.get("/status", response_model=ApiResponse[dict])
 async def get_setup_status():
     if os.path.exists(SETUP_FLAG_FILE):
-        return ApiResponse(data={"is_setup": True})
-    return ApiResponse(data={"is_setup": False})
+        return ApiResponse(data={"isInstalled": True, "is_setup": True})
+    return ApiResponse(data={"isInstalled": False, "is_setup": False})
 
 
 def _build_db_url(db_type: str, host: str, port: int, user: str, password: str, database: str) -> str:
