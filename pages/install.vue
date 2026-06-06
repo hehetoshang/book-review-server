@@ -320,6 +320,14 @@ const copyEnv = () => {
 
 const goToHome = () => navigateTo('/')
 
+watch(() => db.value.type, (newType) => {
+  if (newType === 'sqlite') {
+    dbConnected.value = true
+  } else {
+    dbConnected.value = false
+  }
+})
+
 onMounted(() => {
   // SQLite 自动可用
   if (db.value.type === 'sqlite') {

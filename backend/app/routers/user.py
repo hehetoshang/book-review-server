@@ -26,8 +26,10 @@ async def get_user_comments(
     total = total_result.scalar()
     total_pages = (total + limit - 1) // limit if total else 0
 
+    from sqlalchemy.orm import joinedload
     comments_result = await db.execute(
         select(Comment)
+        .options(joinedload(Comment.app))
         .where(Comment.user_id == current_user.user_id)
         .order_by(Comment.created_at.desc())
         .offset(offset)
@@ -41,8 +43,11 @@ async def get_user_comments(
                 {
                     "id": comment.id,
                     "appId": comment.app_id,
+                    "appName": comment.app.name if comment.app else "",
                     "bookId": comment.book_id,
+                    "bookTitle": comment.book_title,
                     "chapterId": comment.chapter_id,
+                    "chapterName": comment.chapter_name,
                     "content": comment.content,
                     "createdAt": comment.created_at.isoformat() if comment.created_at else "",
                     "rootId": comment.root_id,

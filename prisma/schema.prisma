@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = "file:../data/chapter_comments.db"
 }
 
 model User {
@@ -94,7 +94,9 @@ model Comment {
   appId        Int      @default(0)
   app          App?     @relation("AppComments", fields: [appId], references: [id])
   bookId       Int      @default(0)
+  bookTitle    String   @default("")
   chapterId    Int      @default(0)
+  chapterName  String   @default("")
   segmentId    Int      @default(0)
   cfi          String   @default("")
   cfiBase      String   @default("")
