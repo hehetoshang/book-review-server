@@ -29,7 +29,7 @@ import '@prisma/client';
 
 const register_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { username, email, nickname, password } = body;
+  const { email, password, nickname } = body;
   if (!email || !password) {
     throw createError({ statusCode: 400, statusMessage: "\u90AE\u7BB1\u548C\u5BC6\u7801\u4E0D\u80FD\u4E3A\u7A7A" });
   }
@@ -45,20 +45,9 @@ const register_post = defineEventHandler(async (event) => {
   if (existing) {
     throw createError({ statusCode: 409, statusMessage: "\u8BE5\u90AE\u7BB1\u5DF2\u88AB\u6CE8\u518C" });
   }
-  if (username) {
-    const usernameRegex = /^[a-zA-Z0-9_]{2,20}$/;
-    if (!usernameRegex.test(username.trim())) {
-      throw createError({ statusCode: 400, statusMessage: "\u7528\u6237\u540D\u53EA\u80FD\u5305\u542B\u5B57\u6BCD\u3001\u6570\u5B57\u548C\u4E0B\u5212\u7EBF\uFF0C\u957F\u5EA62-20\u4F4D" });
-    }
-    const existingUsername = await prisma.user.findUnique({ where: { username: username.trim().toLowerCase() } });
-    if (existingUsername) {
-      throw createError({ statusCode: 409, statusMessage: "\u8BE5\u7528\u6237\u540D\u5DF2\u88AB\u6CE8\u518C" });
-    }
-  }
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: {
-      username: username ? username.trim().toLowerCase() : email.trim().toLowerCase().split("@")[0],
       email: email.trim().toLowerCase(),
       nickname: sanitizeHtml(nickname || email.split("@")[0]).slice(0, 50),
       password: hashedPassword,
@@ -70,7 +59,6 @@ const register_post = defineEventHandler(async (event) => {
     err: "ok",
     data: {
       id: user.id,
-      username: user.username,
       email: user.email,
       nickname: user.nickname
     }
